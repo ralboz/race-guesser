@@ -1,0 +1,44 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/f1-predictor/node_modules
+/f1-predictor/.pnp
+f1-predictor/.pnp.*
+f1-predictor/.yarn/*
+!f1-predictor/.yarn/patches
+!f1-predictor/.yarn/plugins
+!f1-predictor/.yarn/releases
+!f1-predictor/.yarn/versions
+
+# testing
+/f1-predictor/coverage
+
+# next.js
+/f1-predictor/.next/
+/f1-predictor/out/
+
+# production
+/f1-predictor/build
+
+# misc
+f1-predictor/.DS_Store
+f1-predictor/*.pem
+
+# debug
+f1-predictor/npm-debug.log*
+f1-predictor/yarn-debug.log*
+f1-predictor/yarn-error.log*
+f1-predictor/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+f1-predictor/.env*
+
+# vercel
+/f1-predictor/.vercel
+
+# typescript
+f1-predictor/*.tsbuildinfo
+f1-predictor/next-env.d.ts
+
+
+backend/node_modules

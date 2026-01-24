@@ -1,0 +1,22 @@
+export const DRIVERS_2026 = [
+    { number: 1, full_name: 'Max Verstappen' },
+    { number: 11, full_name: 'Sergio Perez' },
+    { number: 4, full_name: 'Lando Norris' },
+    { number: 81, full_name: 'Oscar Piastri' },
+    { number: 16, full_name: 'Charles Leclerc' },
+    { number: 55, full_name: 'Carlos Sainz' },
+    { number: 44, full_name: 'Lewis Hamilton' },
+    { number: 63, full_name: 'George Russell' },
+    { number: 3, full_name: 'Daniel Ricciardo' },
+    { number: 18, full_name: 'Lance Stroll' },
+    { number: 22, full_name: 'Yuki Tsunoda' },
+    { number: 77, full_name: 'Valtteri Bottas' },
+    { number: 27, full_name: 'Nico Hulkenberg' },
+    { number: 20, full_name: 'Kevin Magnussen' },
+    { number: 10, full_name: 'Pierre Gasly' },
+    { number: 23, full_name: 'Alexander Albon' },
+    { number: 2, full_name: 'Logan Sargeant' },
+    { number: 6, full_name: 'Nicholas Latifi' },
+    { number: 14, full_name: 'Fernando Alonso' },
+    { number: 31, full_name: 'Esteban Ocon' }
+] as const;
