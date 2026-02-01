@@ -40,5 +40,7 @@ f1-predictor/.env*
 f1-predictor/*.tsbuildinfo
 f1-predictor/next-env.d.ts
 
-
+# backend
 backend/node_modules
+backend/dist
+backend/*.js

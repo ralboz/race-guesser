@@ -1,18 +1,19 @@
-const express = require('express');
+import express, { Request, Response } from 'express';
+import { jwtCheck } from '../middleware/auth';
+
 const router = express.Router();
-const { jwtCheck } = require('../middleware/auth');
 
 router.use(jwtCheck);
 
-router.get('/', (req, res) => {
+router.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'This is a protected endpoint',
     user: req.auth
   });
 });
 
-router.get('/user', (req, res) => {
-  const userId = req.auth.payload.sub;
+router.get('/user', (req: Request, res: Response) => {
+  const userId = req.auth?.payload.sub;
 
   return res.status(404).json({});
   // res.json({
@@ -23,4 +24,4 @@ router.get('/user', (req, res) => {
   // });
 });
 
-module.exports = router;
+export default router;
