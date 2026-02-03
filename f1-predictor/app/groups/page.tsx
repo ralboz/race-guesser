@@ -1,14 +1,14 @@
-import {OpenF1Meeting} from "@/libs/types";
+import {Group, OpenF1Meeting} from "@/libs/types";
 import {RaceCard} from "@/components/RaceCard";
 import { FaCopy } from "react-icons/fa";
 import {NoGroupSection} from "@/components/NoGroupSection";
 import {auth0} from "@/libs/auth0";
 
-async function getUserGroup() {
+async function getUserGroup(): Promise<Group | null> {
     try {
         const tokenObj = await auth0.getAccessToken();
 
-        const res = await fetch('http://localhost:3001/protected/user', {
+        const res = await fetch('http://localhost:3001/protected/group', {
             cache: 'no-store',
             headers: {
                 Authorization: `bearer ${tokenObj.token}`,
@@ -18,11 +18,20 @@ async function getUserGroup() {
         console.log(res);
         if (!res.ok) {
             console.error('Backend error:', res.status, await res.text());
-            return null; // Or redirect/handle unauth
+            return null;
         }
 
         const data = await res.json();
-        return data ?? null;
+        if (!data.group) return null;
+
+        return {
+            id: data.group.id,
+            groupName: data.group.group_name,
+            groupType: data.group.group_type,
+            ownerId: data.group.owner_id,
+            groupId: data.group.id.toString(),
+            isOwner: data.isOwner
+        };
     } catch (error) {
         console.error('Auth/token error:', error);
         return null;
@@ -50,9 +59,16 @@ export default async function Groups() {
             {userGroup ? (
                 <div>
                     <h1 className="text-3xl">{userGroup.groupName}</h1>
-                    <div className="flex flex-row items-center gap-2.5 mb-8">
-                        <p className="text-2xl opacity-80">#{userGroup.groupCode}</p>
+                    <div className="flex flex-row items-center gap-2.5 mb-2">
+                        <p className="text-2xl opacity-80">#{userGroup.groupId}</p>
                         <FaCopy />
+                    </div>
+                    <div className="mb-8">
+                        {userGroup.isOwner ? (
+                            <p className="text-green-500">You are the owner of this group</p>
+                        ) : (
+                            <p className="text-blue-500">You are a member of this group</p>
+                        )}
                     </div>
                     <h2 className="text-xl mb-5">Upcoming Races</h2>
                     <div className="flex flex-row flex-wrap items-center justify-center gap-7">

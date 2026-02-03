@@ -4,15 +4,16 @@ import {useState} from "react";
 import {createPortal} from "react-dom";
 import { IoMdClose } from "react-icons/io";
 import axios from 'axios';
+import { getAccessToken } from "@auth0/nextjs-auth0";
 
 const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
-    const [groupCode, setGroupCode] = useState('');
+    const [groupId, setGroupId] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleSubmit = async () => {
-        if (!groupCode.trim() || !password.trim()) {
+        if (!groupId.trim() || !password.trim()) {
             setError('Please fill in all fields');
             return;
         }
@@ -21,13 +22,18 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
         setError('');
 
         try {
-            const response = await axios.post("http://localhost:3000/join-group", {
-                groupCode,
-                password
+            const token = await getAccessToken();
+
+            const response = await axios.post("http://localhost:3001/protected/join-group", {
+                groupId,
+                groupPassword: password
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
-            
+
             console.log('Successfully joined group:', response.data);
-            // Handle success - maybe redirect or update state
             onClose();
         } catch (err: any) {
             console.error('Error joining group:', err);
@@ -54,8 +60,8 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
                         <p className="text-lg w-28">Group Code</p>
                         <input
                             placeholder="23123"
-                            value={groupCode}
-                            onChange={(e) => setGroupCode(e.target.value)}
+                            value={groupId}
+                            onChange={(e) => setGroupId(e.target.value)}
                             className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
                             disabled={loading}
                         />
@@ -85,27 +91,38 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
 
 const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
     const [groupName, setGroupName] = useState('');
+    const [groupType, setGroupType] = useState('private');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleSubmit = async () => {
-        if (!groupName.trim() || !password.trim()) {
-            setError('Please fill in all fields');
+        if (!groupName.trim()) {
+            setError('Please enter a group name');
+            return;
+        }
+
+        if (groupType === 'private' && !password.trim()) {
+            setError('Password is required for private groups');
             return;
         }
 
         setLoading(true);
         setError('');
-
         try {
-            const response = await axios.post("http://localhost:3000/create-group", {
-                groupName,
-                password
+            const token = await getAccessToken();
+
+            const response = await axios.post("http://localhost:3001/protected/create-group", {
+                group_name: groupName,
+                group_type: groupType,
+                password: groupType === 'private' ? password : null
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
-            
+
             console.log('Successfully created group:', response.data);
-            // Handle success - maybe redirect or update state
             onClose();
         } catch (err: any) {
             console.error('Error creating group:', err);
@@ -139,15 +156,45 @@ const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
                         />
                     </div>
                     <div className="flex flex-row gap-3">
-                        <p className="text-lg w-28">Password</p>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
-                            disabled={loading}
-                        />
+                        <p className="text-lg w-28">Group Type</p>
+                        <div className="flex flex-row gap-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    value="private"
+                                    checked={groupType === 'private'}
+                                    onChange={() => setGroupType('private')}
+                                    className="mr-2"
+                                    disabled={loading}
+                                />
+                                Private
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    value="public"
+                                    checked={groupType === 'public'}
+                                    onChange={() => setGroupType('public')}
+                                    className="mr-2"
+                                    disabled={loading}
+                                />
+                                Public
+                            </label>
+                        </div>
                     </div>
+                    {groupType === 'private' && (
+                        <div className="flex flex-row gap-3">
+                            <p className="text-lg w-28">Password</p>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
+                                disabled={loading}
+                                placeholder="Enter password for private group"
+                            />
+                        </div>
+                    )}
                     <button 
                         className="h-12 px-6 bg-[#2C40BD] rounded-lg text-lg w-fit mx-auto my-6 disabled:opacity-50 disabled:cursor-not-allowed" 
                         onClick={handleSubmit}
@@ -166,7 +213,7 @@ export const NoGroupSection = () => {
     const [createOpen, setCreateOpen] = useState(false);
 
     return (
-        
+
         <>
             <div className="flex flex-row gap-8 mt-10">
                 <button className="w-64 h-14 text-xl rounded-lg bg-[#2C40BD]" onClick={() => setJoinOpen(true)}>Join Group</button>

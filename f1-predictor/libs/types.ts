@@ -17,3 +17,11 @@ export interface OpenF1Meeting {
     year: number;
 }
 
+export interface Group {
+    id: number;
+    groupName: string;
+    groupType: 'public' | 'private';
+    ownerId: string;
+    groupId: string;
+    isOwner?: boolean;
+}

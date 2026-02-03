@@ -5,9 +5,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import publicRoutes from './routes/public';
 import protectedRoutes from './routes/protected';
+import { initializeDatabase } from './models';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+initializeDatabase();
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
