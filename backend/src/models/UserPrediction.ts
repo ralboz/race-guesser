@@ -15,7 +15,7 @@ interface UserPredictionAttributes {
   updated_at: Date;
 }
 
-interface UserPredictionCreationAttributes extends Omit<UserPredictionAttributes, 'id' | 'created_at' | 'updated_at'> {}
+export interface UserPredictionCreationAttributes extends Omit<UserPredictionAttributes, 'id' | 'created_at' | 'updated_at'> {}
 
 class UserPrediction extends Model<UserPredictionAttributes, UserPredictionCreationAttributes> implements UserPredictionAttributes {
   public id!: number;

@@ -2,19 +2,24 @@
 import { useState, ChangeEvent } from 'react';
 import {DRIVERS_2026} from "@/libs/consts";
 import { getAccessToken } from "@auth0/nextjs-auth0"
+import Link from "next/link";
 
-interface Driver { number: number; full_name: string; }
-interface FormData {
+export interface PredictionFormData {
     pole: string;
     p1: string; p2: string; p3: string; p4: string;
     p5: string; p6: string; p7: string; p8: string;
     p9: string; p10: string;
 }
 
-const labels = ['Pole', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'];
+const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'Pole'];
 
-export default function PredictionsForm() {
-    const [formData, setFormData] = useState<FormData>({
+type Props = {
+    raceId: string;
+    loadedFormData?: PredictionFormData | null; //if this is passed, form will be in prefilled disabled mode
+}
+
+export default function PredictionsForm({ raceId, loadedFormData }: Props) {
+    const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
     });
@@ -47,7 +52,7 @@ export default function PredictionsForm() {
         try {
             const token = await getAccessToken();
 
-            const res = await fetch('http://localhost:3001/protected/prediction', {
+            const res = await fetch(`http://localhost:3001/protected/prediction/${raceId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -71,52 +76,70 @@ export default function PredictionsForm() {
         }
     }
 
-    const getOptions = (currentField: keyof FormData) =>
+    const getOptions = (currentField: keyof PredictionFormData) =>
         DRIVERS_2026.filter(driver => {
             if (currentField === 'pole') return true;
-            const isSelectedElsewhere = Object.entries(formData).some(
-                ([key, value]) => key !== currentField && value === driver.full_name
+            const isSelectedInGridPositions = Object.entries(formData).some(
+                ([key, value]) =>
+                    key !== currentField &&
+                    key !== 'pole' &&  // Don't exclude pole selection
+                    value === driver.full_name
             );
-            return !isSelectedElsewhere;
+
+            return !isSelectedInGridPositions;
         }).sort((a, b) => a.number - b.number);
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto p-6">
+            <div className="flex flex-row flex-wrap justify-evenly gap-7">
+                {labels.map((label) => {
+                    const name = label.toLowerCase().replace(' ', '') as keyof PredictionFormData;
+                    return (
+                        <div key={label} className="flex flex-col">
+                            <label className="font-bold text-sm mb-1">{label}</label>
+                            <select
+                                name={name as string}
+                                value={formData[name as keyof PredictionFormData]}
+                                onChange={handleChange}
+                                className={`p-2 border rounded text-white text-sm ${loadedFormData && "opacity-80"}`}
+                                disabled={isLoading || !!loadedFormData}
+                            >
+                                <option value="">Select driver...</option>
+                                {getOptions(name).map(driver => (
+                                    <option key={driver.full_name} value={driver.full_name}>
+                                        #{driver.number} {driver.full_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    );
+                })}
+                {!loadedFormData ?
+                    (
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+                        >
+                            {isLoading ? 'Submitting...' : 'Submit Predictions'}
+                        </button>
+                    )
+                    :
+                    (
+                        <Link
+                            href={'/groups'}
+                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex justify-center"
+                        >
+                            {isLoading ? 'Submitting...' : 'Back to races'}
+                        </Link>
+                    )
+                }
+            </div>
             {message && (
                 <div className={`p-3 rounded ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {message.text}
                 </div>
             )}
-
-            {labels.map((label) => {
-                const name = label.toLowerCase().replace(' ', '') as keyof FormData;
-                return (
-                    <div key={label} className="flex flex-col">
-                        <label className="font-bold text-sm mb-1">{label}</label>
-                        <select
-                            name={name as string}
-                            value={formData[name as keyof FormData]}
-                            onChange={handleChange}
-                            className="p-2 border rounded"
-                            disabled={isLoading}
-                        >
-                            <option value="">Select driver...</option>
-                            {getOptions(name).map(driver => (
-                                <option key={driver.full_name} value={driver.full_name}>
-                                    #{driver.number} {driver.full_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                );
-            })}
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
-            >
-                {isLoading ? 'Submitting...' : 'Submit Predictions'}
-            </button>
         </form>
     );
 }

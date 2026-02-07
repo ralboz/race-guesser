@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { jwtCheck } from '../middleware/auth';
 import { Group, UserPrediction, GroupMember } from '../models';
+import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 
 const router = express.Router();
 
@@ -100,26 +101,73 @@ router.post('/create-group', async (req: Request, res: Response) => {
 });
 
 // Add a prediction
-router.post('/predictions', async (req: Request, res: Response) => {
+router.post('/prediction/:raceId', async (req: Request, res: Response) => {
   try {
     const userId = req.auth?.payload.sub;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
-    const { group_id, race_identifier, position_type, driver_name } = req.body;
+    const raceId = req.params.raceId;
+    const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 } = req.body;
 
-    const prediction = await UserPrediction.create({
+    const ownedGroup = await Group.findOne({ where: { owner_id: userId } });
+    let group_id: number;
+
+    if (ownedGroup) {
+      group_id = ownedGroup.id;
+    } else {
+      const membershipRecord = await GroupMember.findOne({
+        where: { user_id: userId },
+        include: [Group]
+      });
+      if (!membershipRecord?.Group) {
+        return res.status(403).json({ message: 'User must own or be member of a group' });
+      }
+      group_id = membershipRecord.Group.id;
+    }
+
+    //--validations--
+    const positions = { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 };
+    const missing = Object.entries(positions).find(([key, val]) => !val || val.trim() === '');
+    if (missing) {
+      return res.status(400).json({ message: `Missing prediction for ${missing[0]}` });
+    }
+
+    const predictionsData: UserPredictionCreationAttributes[] = Object.entries(positions).map(([position_type, driver_name]) => ({
       user_id: userId,
       group_id,
-      race_identifier,
-      position_type,
-      driver_name
+      race_identifier: raceId,
+      position_type: position_type as 'pole' | 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6' | 'p7' | 'p8' | 'p9' | 'p10',
+      driver_name: driver_name.trim()
+    }) as UserPredictionCreationAttributes);
+
+    const predictions = await UserPrediction.bulkCreate(predictionsData);
+    res.status(201).json({ predictions, group_id });
+  } catch (error) {
+    console.error('Error creating predictions:', error);
+    res.status(500).json({ message: 'Error creating predictions' });
+  }
+});
+
+router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.payload.sub;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { raceId } = req.params;
+    const predictions = await UserPrediction.findAll({
+      where: { user_id: userId, race_identifier: raceId }
     });
 
-    res.status(201).json({ prediction });
+    // Group by position_type
+    const userPredictions = predictions.reduce((acc, pred) => {
+      acc[pred.position_type] = pred.driver_name;
+      return acc;
+    }, {} as Record<'pole'|'p1'|'p2'|'p3'|'p4'|'p5'|'p6'|'p7'|'p8'|'p9'|'p10', string>);
+
+    res.json({ submitted: predictions.length === 11, predictions: userPredictions });
   } catch (error) {
-    console.error('Error creating prediction:', error);
-    res.status(500).json({ message: 'Error creating prediction' });
+    res.status(500).json({ message: 'Error checking predictions' });
   }
 });
 

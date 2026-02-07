@@ -15,7 +15,7 @@ async function getUserGroup(): Promise<Group | null> {
             },
             next: { revalidate: 3600 },
         });
-        console.log(res);
+
         if (!res.ok) {
             console.error('Backend error:', res.status, await res.text());
             return null;

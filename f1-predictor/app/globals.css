@@ -25,6 +25,16 @@ body {
   font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
 
+.dark select option {
+  background-color: #1f2937;
+  color: white;
+}
+
+select option {
+  background-color: white;
+  color: black;
+}
+
 button {
   cursor: pointer;
 }

@@ -13,7 +13,7 @@ export default async function Home() {
                 </h1>
 
                 {user ? (
-                    <div className="flex items-center gap-4 mb-8">
+                    <div className="flex items-center gap-4 mb-8 flex-wrap">
                         <p className="text-xl">Welcome back, {user.name}!</p>
                         <div>
                             <Link href="/groups" className="bg-[#2C40BD] h-8 px-6 py-2 rounded-xl flex items-center justify-center text-lg mx-auto w-fit">
@@ -22,7 +22,7 @@ export default async function Home() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-4 mb-8">
+                    <div className="flex items-center gap-4 mb-8 flex-wrap">
                         <p className="text-xl">
                             To quickly get started create an account here
                         </p>
