@@ -2,6 +2,7 @@ import PredictionsForm, {PredictionFormData} from "@/components/PredictionFrom";
 import {OpenF1Meeting} from "@/libs/types";
 import Image from "next/image";
 import {auth0} from "@/libs/auth0";
+import {redirect} from "next/navigation";
 
 type Props = {
     params: Promise<{ raceId: string }>
@@ -13,7 +14,7 @@ async function getRaceDetails(raceId: string): Promise<OpenF1Meeting | null> {
     });
     if (!res.ok) throw new Error('Failed to fetch race');
     const response: OpenF1Meeting[] = await res.json();
-    if(response.length < 0){
+    if(response.length === 0){
         return null;
     }
     return response[0];
@@ -26,20 +27,24 @@ interface PredictionCheckResponse {
 }
 
 async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
-    const tokenObj = await auth0.getAccessToken();
-
-    const res = await fetch(`http://localhost:3001/protected/prediction/check/${raceId}`, {
-        cache: 'no-store',
-        headers: { Authorization: `bearer ${tokenObj.token}` },
-        next: { revalidate: 3600 },
-    });
-
-    if (!res.ok) {
-        console.error('Backend error:', res.status, await res.text());
-        return null;
+    let tokenObj;
+    try {
+        tokenObj = await auth0.getAccessToken();
+    } catch {
+        redirect(`/auth/login?returnTo=/race/${raceId}`);
     }
 
-    return await res.json() as PredictionCheckResponse;
+    const res = await fetch(`http://localhost:3001/protected/prediction/check/${raceId}`, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${tokenObj.token}` },
+    });
+
+    if (res.status === 401 || res.status === 403) {
+        redirect(`/api/auth/login?returnTo=/race/${raceId}`);
+    }
+
+    if (!res.ok) return null;
+    return (await res.json());
 }
 
 export default async function SpecificRace({ params }: Props) {

@@ -17,7 +17,7 @@ export default async function Home() {
                         <p className="text-xl">Welcome back, {user.name}!</p>
                         <div>
                             <Link href="/groups" className="bg-[#2C40BD] h-8 px-6 py-2 rounded-xl flex items-center justify-center text-lg mx-auto w-fit">
-                                Go to My Groups
+                                Go to My Group
                             </Link>
                         </div>
                     </div>

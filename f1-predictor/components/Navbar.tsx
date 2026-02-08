@@ -14,6 +14,7 @@ export default function Navbar() {
     if(isLoggedIn)
     {
         links = [
+            { href: '/', name: 'Home' },
             { href: '/groups', name: 'Groups' },
             { href: '/leader-board', name: 'Leaderboard' }
         ];
