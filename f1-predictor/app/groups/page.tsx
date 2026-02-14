@@ -40,6 +40,7 @@ async function getUserGroup(): Promise<Group | null> {
 
 async function getGrandPrixRaces(): Promise<OpenF1Meeting[]> {
     const res = await fetch('https://api.openf1.org/v1/meetings?year=2026', {
+        cache: 'force-cache',
         next: { revalidate: 86400 },
     });
     if (!res.ok) throw new Error('Failed to fetch races');

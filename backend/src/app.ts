@@ -5,6 +5,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import publicRoutes from './routes/public';
 import protectedRoutes from './routes/protected';
+import adminRoutes from './routes/admin';
 import { initializeDatabase } from './models';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.json());
 // --Routes--
 app.use('/public', publicRoutes);
 app.use('/protected', protectedRoutes);
+app.use('/admin', adminRoutes)
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
