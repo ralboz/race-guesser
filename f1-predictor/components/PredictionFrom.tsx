@@ -3,6 +3,8 @@ import { useState, ChangeEvent } from 'react';
 import {DRIVERS_2026} from "@/libs/consts";
 import { getAccessToken } from "@auth0/nextjs-auth0"
 import Link from "next/link";
+import { PositionScore } from "@/libs/types";
+import { getScoreColor } from "@/libs/utils";
 
 export interface PredictionFormData {
     pole: string;
@@ -16,9 +18,10 @@ const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'Po
 type Props = {
     raceId: string;
     loadedFormData?: PredictionFormData | null; //if this is passed, form will be in prefilled disabled mode
+    scoreData?: PositionScore[] | null; //if this is passed, form will be in results mode with color-coded backgrounds
 }
 
-export default function PredictionsForm({ raceId, loadedFormData }: Props) {
+export default function PredictionsForm({ raceId, loadedFormData, scoreData }: Props) {
     const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
@@ -89,20 +92,31 @@ export default function PredictionsForm({ raceId, loadedFormData }: Props) {
             return !isSelectedInGridPositions;
         }).sort((a, b) => a.number - b.number);
 
+    const isResultsMode = !!scoreData && scoreData.length > 0;
+    const isDisabled = isLoading || !!loadedFormData || isResultsMode;
+
+    const getScoreForPosition = (positionKey: string): PositionScore | undefined => {
+        if (!scoreData) return undefined;
+        return scoreData.find(s => s.position_type === positionKey);
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto p-6">
             <div className="flex flex-row flex-wrap justify-evenly gap-7">
                 {labels.map((label) => {
                     const name = label.toLowerCase().replace(' ', '') as keyof PredictionFormData;
+                    const score = getScoreForPosition(name);
+                    const colorClass = score ? getScoreColor(score.base_points) : '';
+
                     return (
-                        <div key={label} className="flex flex-col">
+                        <div key={label} className={`flex flex-col rounded p-2 ${colorClass}`}>
                             <label className="font-bold text-sm mb-1">{label}</label>
                             <select
                                 name={name as string}
                                 value={formData[name as keyof PredictionFormData]}
                                 onChange={handleChange}
-                                className={`p-2 border rounded text-white text-sm ${loadedFormData && "opacity-80"}`}
-                                disabled={isLoading || !!loadedFormData}
+                                className={`p-2 border rounded text-white text-sm ${(loadedFormData || isResultsMode) && "opacity-80"}`}
+                                disabled={isDisabled}
                             >
                                 <option value="">Select driver...</option>
                                 {getOptions(name).map(driver => (
@@ -111,10 +125,15 @@ export default function PredictionsForm({ raceId, loadedFormData }: Props) {
                                     </option>
                                 ))}
                             </select>
+                            {score && (
+                                <span className="text-xs mt-1 opacity-90">
+                                    Actual: {score.actual_driver_name}
+                                </span>
+                            )}
                         </div>
                     );
                 })}
-                {!loadedFormData ?
+                {!loadedFormData && !isResultsMode ?
                     (
                         <button
                             type="submit"
