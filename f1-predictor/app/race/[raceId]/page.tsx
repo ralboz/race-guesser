@@ -1,6 +1,4 @@
-import PredictionsForm, {PredictionFormData} from "@/components/PredictionFrom";
-import ScoreSummary from "@/components/ScoreSummary";
-import MiniLeaderboard from "@/components/MiniLeaderboard";
+import RaceContentTabs, {PredictionCheckResponse} from "@/components/RaceContentTabs";
 import {OpenF1Meeting, ScoresResponse, LeaderboardEntry} from "@/libs/types";
 import Image from "next/image";
 import {auth0} from "@/libs/auth0";
@@ -20,12 +18,6 @@ async function getRaceDetails(raceId: string): Promise<OpenF1Meeting | null> {
         return null;
     }
     return response[0];
-}
-
-interface PredictionCheckResponse {
-    submitted: boolean;
-    predictions: PredictionFormData;
-    group_id?: number;
 }
 
 async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
@@ -130,44 +122,14 @@ export default async function SpecificRace({ params }: Props) {
             </div>
             <Image src={raceDetails.circuit_image} alt={`${raceDetails.circuit_short_name} track`} width={250} height={188} className="object-cover"/>
 
-            {/* State 1: Not submitted — editable form */}
-            {!predictionStatus.submitted && (
-                <PredictionsForm raceId={raceId} />
-            )}
-
-            {/* State 2: Submitted, no results — read-only form */}
-            {predictionStatus.submitted && !hasResults && (
-                <>
-                    <h2>You have already submitted for this race!</h2>
-                    <PredictionsForm raceId={raceId} loadedFormData={predictionStatus.predictions} />
-                </>
-            )}
-
-            {/* State 3: Submitted, results available — color-coded results */}
-            {predictionStatus.submitted && hasResults && (
-                <>
-                    <h2>Results are in!</h2>
-                    {scoresResponse!.summary && (
-                        <ScoreSummary
-                            total_points={scoresResponse!.summary.total_points}
-                            exact_hits={scoresResponse!.summary.exact_hits}
-                            near_hits={scoresResponse!.summary.near_hits}
-                            unique_correct_hits={scoresResponse!.summary.unique_correct_hits}
-                        />
-                    )}
-                    <PredictionsForm
-                        raceId={raceId}
-                        loadedFormData={predictionStatus.predictions}
-                        scoreData={scoresResponse!.scores}
-                    />
-                    {leaderboardResponse && leaderboardResponse.leaderboard.length > 0 && (
-                        <MiniLeaderboard
-                            leaderboard={leaderboardResponse.leaderboard}
-                            currentUserId={currentUserId}
-                        />
-                    )}
-                </>
-            )}
+            <RaceContentTabs
+                raceId={raceId}
+                predictionStatus={predictionStatus}
+                hasResults={hasResults}
+                scoresResponse={scoresResponse}
+                leaderboard={leaderboardResponse?.leaderboard ?? []}
+                currentUserId={currentUserId}
+            />
         </div>
     )
 }
