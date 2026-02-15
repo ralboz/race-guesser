@@ -55,3 +55,13 @@ export interface LeaderboardEntry {
     unique_correct_hits: number;
     rank: number;
 }
+
+export interface SeasonLeaderboardEntry {
+    user_id: string;
+    display_name: string;
+    total_points: number;
+    exact_hits: number;
+    near_hits: number;
+    unique_correct_hits: number;
+    rank: number;
+}

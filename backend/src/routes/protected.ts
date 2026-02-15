@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { fn, col, Op, where as seqWhere, literal } from 'sequelize';
 import { jwtCheck } from '../middleware/auth';
 import { syncUserProfile } from '../middleware/syncUserProfile';
 import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
@@ -322,6 +323,98 @@ router.get('/scores/:raceId', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching scores:', error);
     res.status(500).json({ message: 'Error fetching scores' });
+  }
+});
+
+// Get season ALL RACES leaderboard for user's group 
+router.get('/leaderboard/season', async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.payload.sub;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.json({ leaderboard: [], raceCount: 0 });
+    }
+
+    // Aggregate scores across all races for the group in the current year
+    const currentYear = new Date().getFullYear();
+    const yearFilter = seqWhere(fn('EXTRACT', literal('YEAR FROM "computed_at"')), currentYear);
+    const scores = await UserRaceScore.findAll({
+      attributes: [
+        'user_id',
+        [fn('SUM', col('total_points')), 'total_points'],
+        [fn('SUM', col('exact_hits')), 'exact_hits'],
+        [fn('SUM', col('near_hits')), 'near_hits'],
+        [fn('SUM', col('unique_correct_hits')), 'unique_correct_hits'],
+      ],
+      where: { group_id, [Op.and]: [yearFilter] },
+      group: ['user_id'],
+      order: [
+        [fn('SUM', col('total_points')), 'DESC'],
+        [fn('SUM', col('exact_hits')), 'DESC'],
+      ],
+      raw: true,
+    });
+
+    // Count distinct races for this group in the current year
+    const raceCount = await UserRaceScore.count({
+      where: { group_id, [Op.and]: [yearFilter] },
+      distinct: true,
+      col: 'race_identifier',
+    });
+
+    // Fetch display names for all user IDs
+    const userIds = scores.map((s) => s.user_id);
+    const profiles = await UserProfile.findAll({
+      where: { user_id: userIds },
+    });
+    const profileMap = new Map(profiles.map((p) => [p.user_id, p.display_name]));
+
+    // Compute ranks with tie-handling
+    const leaderboard: Array<{
+      user_id: string;
+      display_name: string;
+      total_points: number;
+      exact_hits: number;
+      near_hits: number;
+      unique_correct_hits: number;
+      rank: number;
+    }> = [];
+
+    scores.forEach((score, index) => {
+      const totalPoints = Number(score.total_points);
+      const exactHits = Number(score.exact_hits);
+      const nearHits = Number(score.near_hits);
+      const uniqueCorrectHits = Number(score.unique_correct_hits);
+
+      let rank = 1;
+      if (index > 0) {
+        const prev = leaderboard[index - 1];
+        if (totalPoints === prev.total_points && exactHits === prev.exact_hits) {
+          rank = prev.rank;
+        } else {
+          rank = index + 1;
+        }
+      }
+
+      leaderboard.push({
+        user_id: score.user_id,
+        display_name: profileMap.get(score.user_id) ?? score.user_id,
+        total_points: totalPoints,
+        exact_hits: exactHits,
+        near_hits: nearHits,
+        unique_correct_hits: uniqueCorrectHits,
+        rank,
+      });
+    });
+
+    res.json({ leaderboard, raceCount });
+  } catch (error) {
+    console.error('Error fetching season leaderboard:', error);
+    res.status(500).json({ message: 'Error fetching season leaderboard' });
   }
 });
 
