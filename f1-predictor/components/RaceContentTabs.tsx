@@ -81,14 +81,13 @@ export default function RaceContentTabs({
                             <PredictionsForm raceId={raceId} />
                         )}
                         {predictionStatus.submitted && !hasResults && (
-                            <>
+                            <div className="pt-2">
                                 <h2>You have already submitted for this race!</h2>
                                 <PredictionsForm raceId={raceId} loadedFormData={predictionStatus.predictions} />
-                            </>
+                            </div>
                         )}
                         {predictionStatus.submitted && hasResults && (
-                            <>
-                                <h2>Results are in!</h2>
+                            <div className="flex flex-col items-center pt-4">
                                 {scoresResponse!.summary && (
                                     <ScoreSummary
                                         total_points={scoresResponse!.summary.total_points}
@@ -102,7 +101,7 @@ export default function RaceContentTabs({
                                     loadedFormData={predictionStatus.predictions}
                                     scoreData={scoresResponse!.scores}
                                 />
-                            </>
+                            </div>
                         )}
                     </div>
                 )}

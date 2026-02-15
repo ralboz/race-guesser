@@ -12,7 +12,7 @@ export default function ScoreSummary({
   unique_correct_hits,
 }: ScoreSummaryProps) {
   return (
-    <div className="flex flex-row flex-wrap items-center gap-4 px-4 py-3 bg-[#1A1A1A] rounded-lg">
+    <div className="flex flex-row flex-wrap items-center justify-center gap-4 px-4 py-3 bg-[#1A1A1A] rounded-lg w-[50%]">
       <div className="flex flex-col items-center">
         <span className="text-2xl font-bold">{total_points}</span>
         <span className="text-xs text-gray-400">Points</span>
