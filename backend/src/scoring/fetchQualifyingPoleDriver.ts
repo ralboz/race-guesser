@@ -22,7 +22,10 @@ export async function fetchQualifyingPoleDriver(
 
     const qualifyingSessionKey = sessions[0].session_key;
 
-    const resultsUrl = `https://api.openf1.org/v1/session_result?session_key=${encodeURIComponent(qualifyingSessionKey)}&position<=11`;
+    // Unfortunately needs sleep timeout to avoid hitting API rate limit
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const resultsUrl = `https://api.openf1.org/v1/session_result?session_key=${encodeURIComponent(qualifyingSessionKey)}`;
     const resultsRes = await fetch(resultsUrl);
     if (!resultsRes.ok) {
       throw new Error(`OpenF1 error ${resultsRes.status} for ${resultsUrl}`);
