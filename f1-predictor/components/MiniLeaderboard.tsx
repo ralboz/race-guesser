@@ -38,7 +38,7 @@ export default function MiniLeaderboard({
                 }
               >
                 <td className="px-3 py-2">{entry.rank}</td>
-                <td className="px-3 py-2">{entry.user_id}</td>
+                <td className="px-3 py-2">{entry.display_name || entry.user_id}</td>
                 <td className="px-3 py-2 text-right">{entry.total_points}</td>
                 <td className="px-3 py-2 text-right text-green-400">
                   {entry.exact_hits}

@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { jwtCheck } from '../middleware/auth';
-import { Group, UserPrediction, GroupMember } from '../models';
+import { syncUserProfile } from '../middleware/syncUserProfile';
+import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
 import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
@@ -22,6 +23,7 @@ async function getUserGroupId(userId: string): Promise<number | null> {
 const router = express.Router();
 
 router.use(jwtCheck);
+router.use(syncUserProfile);
 
 router.get('/', (req: Request, res: Response) => {
   res.json({
@@ -349,9 +351,17 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
       ]
     });
 
+    // Batch-query UserProfile for all user_ids in the results
+    const userIds = scores.map((s) => s.user_id);
+    const profiles = await UserProfile.findAll({
+      where: { user_id: userIds }
+    });
+    const profileMap = new Map(profiles.map((p) => [p.user_id, p.display_name]));
+
     // Users with same total_points AND exact_hits get the same rank
     const leaderboard: Array<{
       user_id: string;
+      display_name: string;
       total_points: number;
       exact_hits: number;
       near_hits: number;
@@ -372,6 +382,7 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
       }
       leaderboard.push({
         user_id: score.user_id,
+        display_name: profileMap.get(score.user_id) ?? score.user_id,
         total_points: score.total_points,
         exact_hits: score.exact_hits,
         near_hits: score.near_hits,

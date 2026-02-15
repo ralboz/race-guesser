@@ -48,6 +48,7 @@ export interface ScoresResponse {
 
 export interface LeaderboardEntry {
     user_id: string;
+    display_name: string;
     total_points: number;
     exact_hits: number;
     near_hits: number;

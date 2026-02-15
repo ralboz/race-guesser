@@ -6,8 +6,11 @@ declare global {
       auth?: {
         payload: JwtPayload & {
           sub: string;
+          name?: string;
+          nickname?: string;
         };
       };
+      displayName?: string;
     }
   }
 }
