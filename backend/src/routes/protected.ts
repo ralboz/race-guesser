@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { jwtCheck } from '../middleware/auth';
 import { Group, UserPrediction, GroupMember } from '../models';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
+import { hashPassword, verifyPassword } from '../utils/password';
 
 const router = express.Router();
 
@@ -90,7 +91,7 @@ router.post('/create-group', async (req: Request, res: Response) => {
       group_name,
       group_type,
       owner_id: userId,
-      password: group_type === 'private' ? password : null
+      password: group_type === 'private' ? await hashPassword(password) : undefined
     });
 
     res.status(201).json({ group: newGroup });
@@ -209,7 +210,7 @@ router.post('/join-group', async (req: Request, res: Response) => {
       if (!groupPassword) {
         return res.status(400).json({ message: 'Password is required for private groups' });
       }
-      if (group.password !== groupPassword) {
+      if (!(await verifyPassword(groupPassword, group.password!))) {
         return res.status(401).json({ message: 'Incorrect password' });
       }
     }
