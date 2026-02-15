@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { fn, col, Op, where as seqWhere, literal } from 'sequelize';
+import { fn, col, Op } from 'sequelize';
 import { jwtCheck } from '../middleware/auth';
 import { syncUserProfile } from '../middleware/syncUserProfile';
 import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
@@ -341,7 +341,8 @@ router.get('/leaderboard/season', async (req: Request, res: Response) => {
 
     // Aggregate scores across all races for the group in the current year
     const currentYear = new Date().getFullYear();
-    const yearFilter = seqWhere(fn('EXTRACT', literal('YEAR FROM "computed_at"')), currentYear);
+    const yearStart = new Date(`${currentYear}-01-01T00:00:00`);
+    const yearEnd = new Date(`${currentYear + 1}-01-01T00:00:00`);
     const scores = await UserRaceScore.findAll({
       attributes: [
         'user_id',
@@ -350,7 +351,10 @@ router.get('/leaderboard/season', async (req: Request, res: Response) => {
         [fn('SUM', col('near_hits')), 'near_hits'],
         [fn('SUM', col('unique_correct_hits')), 'unique_correct_hits'],
       ],
-      where: { group_id, [Op.and]: [yearFilter] },
+      where: {
+        group_id,
+        computed_at: { [Op.gte]: yearStart, [Op.lt]: yearEnd },
+      },
       group: ['user_id'],
       order: [
         [fn('SUM', col('total_points')), 'DESC'],
@@ -361,7 +365,10 @@ router.get('/leaderboard/season', async (req: Request, res: Response) => {
 
     // Count distinct races for this group in the current year
     const raceCount = await UserRaceScore.count({
-      where: { group_id, [Op.and]: [yearFilter] },
+      where: {
+        group_id,
+        computed_at: { [Op.gte]: yearStart, [Op.lt]: yearEnd },
+      },
       distinct: true,
       col: 'race_identifier',
     });
