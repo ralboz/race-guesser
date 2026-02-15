@@ -5,13 +5,7 @@ export interface TokenClaims {
   [key: string]: unknown;
 }
 
-/**
- * Resolves a human-readable display name from Auth0 token claims.
- *
- * Priority: name → nickname → sub
- * Non-string values for name/nickname are treated as absent.
- * Values that are empty or whitespace-only after trimming are treated as absent.
- */
+//Resolves a human-readable display name from Auth0 token claims. Priority: name -> nickname -> sub
 export function resolveDisplayName(claims: TokenClaims): string {
   if (typeof claims.name === 'string') {
     const trimmed = claims.name.trim();
