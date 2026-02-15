@@ -1,12 +1,31 @@
 import express, { Request, Response } from 'express';
+import { fn, col, Op } from 'sequelize';
 import { jwtCheck } from '../middleware/auth';
-import { Group, UserPrediction, GroupMember } from '../models';
+import { syncUserProfile } from '../middleware/syncUserProfile';
+import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
+import PredictionScore from '../models/PredictionScore';
+import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 import { hashPassword, verifyPassword } from '../utils/password';
+
+//Look up the group a user belongs to (as owner or member)
+async function getUserGroupId(userId: string): Promise<number | null> {
+  const ownedGroup = await Group.findOne({ where: { owner_id: userId } });
+  if (ownedGroup) return ownedGroup.id;
+
+  const membershipRecord = await GroupMember.findOne({
+    where: { user_id: userId },
+    include: [Group]
+  });
+  if (membershipRecord?.Group) return membershipRecord.Group.id;
+
+  return null;
+}
 
 const router = express.Router();
 
 router.use(jwtCheck);
+router.use(syncUserProfile);
 
 router.get('/', (req: Request, res: Response) => {
   res.json({
@@ -111,20 +130,9 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
     const raceId = req.params.raceId;
     const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 } = req.body;
 
-    const ownedGroup = await Group.findOne({ where: { owner_id: userId } });
-    let group_id: number;
-
-    if (ownedGroup) {
-      group_id = ownedGroup.id;
-    } else {
-      const membershipRecord = await GroupMember.findOne({
-        where: { user_id: userId },
-        include: [Group]
-      });
-      if (!membershipRecord?.Group) {
-        return res.status(403).json({ message: 'User must own or be member of a group' });
-      }
-      group_id = membershipRecord.Group.id;
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.status(403).json({ message: 'User must own or be member of a group' });
     }
 
     //--validations--
@@ -251,6 +259,243 @@ router.get('/predictions/:groupId/:raceId', async (req: Request, res: Response) 
   } catch (error) {
     console.error('Error fetching predictions:', error);
     res.status(500).json({ message: 'Error fetching predictions' });
+  }
+});
+
+// Get user's prediction scores for a race
+router.get('/scores/:raceId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.payload.sub;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const { raceId } = req.params;
+
+    const group_id = await getUserGroupId(userId);
+
+    // user has no group
+    if (group_id === null) {
+      return res.json({ hasResults: false, scores: [], summary: null });
+    }
+
+    // Query PredictionScore for this user-group-race
+    const predictionScores = await PredictionScore.findAll({
+      where: {
+        user_id: userId,
+        group_id,
+        race_identifier: raceId
+      }
+    });
+
+    if (predictionScores.length === 0) {
+      return res.json({ hasResults: false, scores: [], summary: null });
+    }
+
+    // Map to response shape
+    const scores = predictionScores.map((ps) => ({
+      position_type: ps.position_type,
+      predicted_driver_name: ps.predicted_driver_name,
+      actual_driver_name: ps.actual_driver_name,
+      base_points: ps.base_points,
+      final_points: ps.final_points,
+      unique_correct: ps.unique_correct
+    }));
+
+    // Query UserRaceScore for summary data
+    const userRaceScore = await UserRaceScore.findOne({
+      where: {
+        user_id: userId,
+        group_id,
+        race_identifier: raceId
+      }
+    });
+
+    const summary = userRaceScore
+      ? {
+          total_points: userRaceScore.total_points,
+          exact_hits: userRaceScore.exact_hits,
+          near_hits: userRaceScore.near_hits,
+          unique_correct_hits: userRaceScore.unique_correct_hits
+        }
+      : null;
+
+    res.json({ hasResults: true, scores, summary });
+  } catch (error) {
+    console.error('Error fetching scores:', error);
+    res.status(500).json({ message: 'Error fetching scores' });
+  }
+});
+
+// Get season ALL RACES leaderboard for user's group 
+router.get('/leaderboard/season', async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.payload.sub;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.json({ leaderboard: [], raceCount: 0 });
+    }
+
+    // Aggregate scores across all races for the group in the current year
+    const currentYear = new Date().getFullYear();
+    const yearStart = new Date(`${currentYear}-01-01T00:00:00`);
+    const yearEnd = new Date(`${currentYear + 1}-01-01T00:00:00`);
+    const scores = await UserRaceScore.findAll({
+      attributes: [
+        'user_id',
+        [fn('SUM', col('total_points')), 'total_points'],
+        [fn('SUM', col('exact_hits')), 'exact_hits'],
+        [fn('SUM', col('near_hits')), 'near_hits'],
+        [fn('SUM', col('unique_correct_hits')), 'unique_correct_hits'],
+      ],
+      where: {
+        group_id,
+        computed_at: { [Op.gte]: yearStart, [Op.lt]: yearEnd },
+      },
+      group: ['user_id'],
+      order: [
+        [fn('SUM', col('total_points')), 'DESC'],
+        [fn('SUM', col('exact_hits')), 'DESC'],
+      ],
+      raw: true,
+    });
+
+    // Count distinct races for this group in the current year
+    const raceCount = await UserRaceScore.count({
+      where: {
+        group_id,
+        computed_at: { [Op.gte]: yearStart, [Op.lt]: yearEnd },
+      },
+      distinct: true,
+      col: 'race_identifier',
+    });
+
+    // Fetch display names for all user IDs
+    const userIds = scores.map((s) => s.user_id);
+    const profiles = await UserProfile.findAll({
+      where: { user_id: userIds },
+    });
+    const profileMap = new Map(profiles.map((p) => [p.user_id, p.display_name]));
+
+    // Compute ranks with tie-handling
+    const leaderboard: Array<{
+      user_id: string;
+      display_name: string;
+      total_points: number;
+      exact_hits: number;
+      near_hits: number;
+      unique_correct_hits: number;
+      rank: number;
+    }> = [];
+
+    scores.forEach((score, index) => {
+      const totalPoints = Number(score.total_points);
+      const exactHits = Number(score.exact_hits);
+      const nearHits = Number(score.near_hits);
+      const uniqueCorrectHits = Number(score.unique_correct_hits);
+
+      let rank = 1;
+      if (index > 0) {
+        const prev = leaderboard[index - 1];
+        if (totalPoints === prev.total_points && exactHits === prev.exact_hits) {
+          rank = prev.rank;
+        } else {
+          rank = index + 1;
+        }
+      }
+
+      leaderboard.push({
+        user_id: score.user_id,
+        display_name: profileMap.get(score.user_id) ?? score.user_id,
+        total_points: totalPoints,
+        exact_hits: exactHits,
+        near_hits: nearHits,
+        unique_correct_hits: uniqueCorrectHits,
+        rank,
+      });
+    });
+
+    res.json({ leaderboard, raceCount });
+  } catch (error) {
+    console.error('Error fetching season leaderboard:', error);
+    res.status(500).json({ message: 'Error fetching season leaderboard' });
+  }
+});
+
+// Get race leaderboard for user's group
+router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
+  try {
+    const userId = req.auth?.payload.sub;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const { raceId } = req.params;
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.json({ leaderboard: [] });
+    }
+
+    const scores = await UserRaceScore.findAll({
+      where: {
+        group_id,
+        race_identifier: raceId
+      },
+      order: [
+        ['total_points', 'DESC'],
+        ['exact_hits', 'DESC']
+      ]
+    });
+
+    // Batch-query UserProfile for all user_ids in the results
+    const userIds = scores.map((s) => s.user_id);
+    const profiles = await UserProfile.findAll({
+      where: { user_id: userIds }
+    });
+    const profileMap = new Map(profiles.map((p) => [p.user_id, p.display_name]));
+
+    // Users with same total_points AND exact_hits get the same rank
+    const leaderboard: Array<{
+      user_id: string;
+      display_name: string;
+      total_points: number;
+      exact_hits: number;
+      near_hits: number;
+      unique_correct_hits: number;
+      rank: number;
+    }> = [];
+
+    scores.forEach((score, index) => {
+      let rank = 1;
+      if (index > 0) {
+        const prev = scores[index - 1];
+        const prevRank = leaderboard[index - 1].rank;
+        if (score.total_points === prev.total_points && score.exact_hits === prev.exact_hits) {
+          rank = prevRank;
+        } else {
+          rank = index + 1;
+        }
+      }
+      leaderboard.push({
+        user_id: score.user_id,
+        display_name: profileMap.get(score.user_id) ?? score.user_id,
+        total_points: score.total_points,
+        exact_hits: score.exact_hits,
+        near_hits: score.near_hits,
+        unique_correct_hits: score.unique_correct_hits,
+        rank
+      });
+    });
+
+    res.json({ leaderboard });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Error fetching leaderboard' });
   }
 });
 

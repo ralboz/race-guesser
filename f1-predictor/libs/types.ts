@@ -25,3 +25,43 @@ export interface Group {
     groupId: string;
     isOwner?: boolean;
 }
+
+export interface PositionScore {
+    position_type: string;
+    predicted_driver_name: string;
+    actual_driver_name: string;
+    base_points: number;
+    final_points: number;
+    unique_correct: boolean;
+}
+
+export interface ScoresResponse {
+    hasResults: boolean;
+    scores: PositionScore[];
+    summary: {
+        total_points: number;
+        exact_hits: number;
+        near_hits: number;
+        unique_correct_hits: number;
+    } | null;
+}
+
+export interface LeaderboardEntry {
+    user_id: string;
+    display_name: string;
+    total_points: number;
+    exact_hits: number;
+    near_hits: number;
+    unique_correct_hits: number;
+    rank: number;
+}
+
+export interface SeasonLeaderboardEntry {
+    user_id: string;
+    display_name: string;
+    total_points: number;
+    exact_hits: number;
+    near_hits: number;
+    unique_correct_hits: number;
+    rank: number;
+}
