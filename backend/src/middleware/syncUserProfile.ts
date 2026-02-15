@@ -11,7 +11,7 @@ async function syncUserProfile(req: Request, res: Response, next: NextFunction):
       return;
     }
 
-    const namespace = 'https://f1-predictor.eu.auth0.com/';
+    const namespace = 'https://f1-predictor.com/';
     const nameValue = payload[`${namespace}name`];
     const nicknameValue = payload[`${namespace}nickname`];
 
