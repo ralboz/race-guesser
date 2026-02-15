@@ -106,13 +106,15 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
                 {labels.map((label) => {
                     const name = label.toLowerCase().replace(' ', '') as keyof PredictionFormData;
                     const score = getScoreForPosition(name);
-                    const colorClass = score
-                        ? (score.unique_correct ? 'bg-yellow-500' : getScoreColor(score.base_points))
-                        : '';
+                    const colorClass = score ? getScoreColor(score.base_points) : '';
 
                     return (
                         <div key={label} className={`flex flex-col rounded p-2 ${colorClass}`}>
-                            <label className="font-bold text-sm mb-1">{label}</label>
+                            <div className="flex justify-between">
+                                <label className="font-bold text-sm mb-1">{label}</label>
+                                {score?.unique_correct && <p className="text-sm">Points x2</p>}
+
+                            </div>
                             <select
                                 name={name as string}
                                 value={formData[name as keyof PredictionFormData]}
