@@ -3,6 +3,7 @@ import Group from '../models/Group';
 import { hashPassword } from '../utils/password';
 import { Op } from 'sequelize';
 
+//run npx ts-node .\src\scripts\migrate-passwords.ts if ever needed again
 async function migratePasswords(): Promise<void> {
   console.log('Starting password migration...');
 

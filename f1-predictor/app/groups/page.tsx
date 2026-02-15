@@ -3,11 +3,17 @@ import {RaceCard} from "@/components/RaceCard";
 import { FaCopy } from "react-icons/fa";
 import {NoGroupSection} from "@/components/NoGroupSection";
 import {auth0} from "@/libs/auth0";
+import {redirect} from "next/navigation";
 
 async function getUserGroup(): Promise<Group | null> {
+    let tokenObj;
     try {
-        const tokenObj = await auth0.getAccessToken();
+        tokenObj = await auth0.getAccessToken();
+    } catch {
+        redirect(`/auth/login?returnTo=/groups`);
+    }
 
+    try {
         const res = await fetch('http://localhost:3001/protected/group', {
             cache: 'no-store',
             headers: {
@@ -51,10 +57,10 @@ async function getGrandPrixRaces(): Promise<OpenF1Meeting[]> {
 
 export default async function Groups() {
     const [userGroup, races] = await Promise.all([getUserGroup(), getGrandPrixRaces()]);
-    const now = new Date(); // Uses server time; consistent for SSR [web:19]
+    const now = new Date();
     const pastRaces = races.filter(race => new Date(race.date_start) < now);
     const upcomingRaces = races.filter(race => new Date(race.date_start) >= now);
-    console.log(userGroup);
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-4">
             {userGroup ? (
