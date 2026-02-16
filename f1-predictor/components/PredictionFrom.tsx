@@ -19,9 +19,10 @@ type Props = {
     raceId: string;
     loadedFormData?: PredictionFormData | null; //if this is passed, form will be in prefilled disabled mode
     scoreData?: PositionScore[] | null; //if this is passed, form will be in results mode with color-coded backgrounds
+    windowDisabled?: boolean; //if true, form inputs and submit are disabled due to prediction window
 }
 
-export default function PredictionsForm({ raceId, loadedFormData, scoreData }: Props) {
+export default function PredictionsForm({ raceId, loadedFormData, scoreData, windowDisabled }: Props) {
     const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
@@ -93,7 +94,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
         }).sort((a, b) => a.number - b.number);
 
     const isResultsMode = !!scoreData && scoreData.length > 0;
-    const isDisabled = isLoading || !!loadedFormData || isResultsMode;
+    const isDisabled = isLoading || !!loadedFormData || isResultsMode || !!windowDisabled;
 
     const getScoreForPosition = (positionKey: string): PositionScore | undefined => {
         if (!scoreData) return undefined;
@@ -141,8 +142,8 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
                     (
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+                            disabled={isLoading || !!windowDisabled}
+                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Submitting...' : 'Submit Predictions'}
                         </button>

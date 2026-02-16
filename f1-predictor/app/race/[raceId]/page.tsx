@@ -4,6 +4,12 @@ import Image from "next/image";
 import {auth0} from "@/libs/auth0";
 import {redirect} from "next/navigation";
 
+export type PredictionWindowStatus = {
+    status: 'not_yet_open' | 'open' | 'closed';
+    openTime: string;
+    closeTime: string;
+};
+
 type Props = {
     params: Promise<{ raceId: string }>
 }
@@ -71,12 +77,34 @@ async function fetchLeaderboard(raceId: string, token: string): Promise<Leaderbo
     }
 }
 
+async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowStatus | null> {
+    let tokenObj;
+    try {
+        tokenObj = await auth0.getAccessToken();
+    } catch {
+        return null;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:3001/protected/prediction-window/${raceId}`, {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${tokenObj.token}` },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
+
+
 
 export default async function SpecificRace({ params }: Props) {
     const { raceId } = await params;
-    const [raceDetails, predictionStatus] = await Promise.all([
+    const [raceDetails, predictionStatus, windowStatus] = await Promise.all([
         getRaceDetails(raceId),
-        userPredictionStatus(raceId)
+        userPredictionStatus(raceId),
+        fetchPredictionWindow(raceId)
     ]);
 
     if(!raceDetails || !predictionStatus) return null;
@@ -129,6 +157,7 @@ export default async function SpecificRace({ params }: Props) {
                 scoresResponse={scoresResponse}
                 leaderboard={leaderboardResponse?.leaderboard ?? []}
                 currentUserId={currentUserId}
+                windowStatus={windowStatus}
             />
         </div>
     )

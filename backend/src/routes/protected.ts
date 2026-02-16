@@ -7,6 +7,7 @@ import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 import { hashPassword, verifyPassword } from '../utils/password';
+import { getPredictionWindow } from '../services/predictionWindowService';
 
 //Look up the group a user belongs to (as owner or member)
 async function getUserGroupId(userId: string): Promise<number | null> {
@@ -128,6 +129,20 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'User ID is required' });
     }
     const raceId = req.params.raceId;
+
+    // Validate prediction window before processing
+    try {
+      const window = await getPredictionWindow(raceId as string);
+      if (window.status === 'closed') {
+        return res.status(403).json({ message: 'Predictions are closed for this race' });
+      }
+      if (window.status === 'not_yet_open') {
+        return res.status(403).json({ message: 'Predictions are not yet open for this race' });
+      }
+    } catch (windowError) {
+      return res.status(503).json({ message: 'Unable to verify prediction window. Please try again later.' });
+    }
+
     const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 } = req.body;
 
     const group_id = await getUserGroupId(userId);
@@ -496,6 +511,21 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({ message: 'Error fetching leaderboard' });
+  }
+});
+
+// returns prediction time window for race.
+router.get('/prediction-window/:raceId', async (req: Request, res: Response) => {
+  try {
+    const raceId = req.params.raceId;
+    const window = await getPredictionWindow(raceId as string);
+    return res.json({
+      status: window.status,
+      openTime: window.openTime.toISOString(),
+      closeTime: window.closeTime.toISOString(),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Unable to determine prediction window for this race' });
   }
 });
 
