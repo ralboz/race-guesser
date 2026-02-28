@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { fn, col, Op } from 'sequelize';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, getAuth } from '../middleware/auth';
 import { syncUserProfile } from '../middleware/syncUserProfile';
 import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
@@ -8,6 +9,25 @@ import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 import { hashPassword, verifyPassword } from '../utils/password';
 import { getPredictionWindow } from '../services/predictionWindowService';
+import { validDriverNames } from '../data';
+
+// 20 requests every 15 mins
+const mutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' }
+});
+
+// 5 requests every 15 mins
+const joinGroupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many join attempts, please try again later.' }
+});
 
 //Look up the group a user belongs to (as owner or member)
 async function getUserGroupId(userId: string): Promise<number | null> {
@@ -71,7 +91,7 @@ router.get('/group', async (req: Request, res: Response) => {
 });
 
 // Create a new group
-router.post('/create-group', async (req: Request, res: Response) => {
+router.post('/create-group', mutationLimiter, async (req: Request, res: Response) => {
   try {
     const userId = getAuth(req).userId;
     if (!userId) {
@@ -86,19 +106,19 @@ router.post('/create-group', async (req: Request, res: Response) => {
     if(group_type !== 'private' && group_type !== 'public') return res.status(400).json({ message: 'Group type must be either private or public'});
     if(group_type === 'private' && !password) return res.status(400).json({ message: 'Password is required for private groups' });
 
-    const generateRandomId = async () => {
-      const min = 1000;
-      const max = 1000000;
-      const randomId = Math.floor(Math.random() * (max - min + 1)) + min;
-
-      const existingGroup = await Group.findByPk(randomId);
-      if (existingGroup) {
-        return generateRandomId();
+    const MAX_ID_ATTEMPTS = 20;
+    let groupId: number | null = null;
+    for (let attempt = 0; attempt < MAX_ID_ATTEMPTS; attempt++) {
+      const candidate = Math.floor(Math.random() * (1000000 - 1000 + 1)) + 1000;
+      const existing = await Group.findByPk(candidate);
+      if (!existing) {
+        groupId = candidate;
+        break;
       }
-      return randomId;
-    };
-
-    const groupId = await generateRandomId();
+    }
+    if (groupId === null) {
+      return res.status(503).json({ message: 'Unable to generate a unique group ID. Please try again.' });
+    }
 
     const newGroup = await Group.create({
       id: groupId,
@@ -116,7 +136,7 @@ router.post('/create-group', async (req: Request, res: Response) => {
 });
 
 // Add a prediction
-router.post('/prediction/:raceId', async (req: Request, res: Response) => {
+router.post('/prediction/:raceId', mutationLimiter, async (req: Request, res: Response) => {
   try {
     const userId = getAuth(req).userId;
     if (!userId) {
@@ -149,6 +169,12 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
     const missing = Object.entries(positions).find(([key, val]) => !val || val.trim() === '');
     if (missing) {
       return res.status(400).json({ message: `Missing prediction for ${missing[0]}` });
+    }
+
+    // Validate all driver names against the known driver list
+    const invalidEntry = Object.entries(positions).find(([, name]) => !validDriverNames.has(name.trim()));
+    if (invalidEntry) {
+      return res.status(400).json({ message: `Invalid driver name: "${invalidEntry[1].trim()}"` });
     }
 
     const predictionsData: UserPredictionCreationAttributes[] = Object.entries(positions).map(([position_type, driver_name]) => ({
@@ -190,7 +216,7 @@ router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
 });
 
 // Join a group
-router.post('/join-group', async (req: Request, res: Response) => {
+router.post('/join-group', joinGroupLimiter, async (req: Request, res: Response) => {
   try {
     const userId = getAuth(req).userId;
     if (!userId) {
