@@ -25,7 +25,7 @@ export default function Navbar() {
     }
 
     return (
-        <nav className="flex bg-[202020] h-16 items-center justify-between">
+        <nav className="flex bg-[#202020] h-16 items-center justify-between">
             <div className="flex">
                 {links.map((link) => (
                     <Link
