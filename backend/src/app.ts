@@ -3,6 +3,7 @@ dotenv.config();
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { clerkMiddleware } from './middleware/auth';
 import publicRoutes from './routes/public';
 import protectedRoutes from './routes/protected';
 import adminRoutes from './routes/admin';
@@ -20,16 +21,21 @@ app.use(cors({
 
 app.use(express.json());
 
+// Global Clerk middleware — parses auth state on all requests
+app.use(clerkMiddleware());
+
 // --Routes--
 app.use('/public', publicRoutes);
 app.use('/protected', protectedRoutes);
 app.use('/admin', adminRoutes)
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
-
-  // Handle auth errors
-  if (err.name === 'UnauthorizedError') {
+  if (
+    err.name === 'UnauthorizedError' ||
+    err.message?.includes('Unauthenticated') ||
+    err.status === 401
+  ) {
     return res.status(401).json({ message: 'Invalid token or missing authentication' });
   }
 

@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { auth0 } from "@/libs/auth0";
+import { currentUser } from "@clerk/nextjs/server";
 
 export default async function Home() {
-    const session = await auth0.getSession();
-    const user = session?.user;
+    const user = await currentUser();
 
     return (
         <div>
@@ -14,7 +13,7 @@ export default async function Home() {
 
                 {user ? (
                     <div className="flex items-center gap-4 mb-8 flex-wrap">
-                        <p className="text-xl">Welcome back, {user.name}!</p>
+                        <p className="text-xl">Welcome back, {user.firstName}!</p>
                         <div>
                             <Link href="/groups" className="bg-[#2C40BD] h-8 px-6 py-2 rounded-xl flex items-center justify-center text-lg mx-auto w-fit">
                                 Go to My Group
@@ -26,7 +25,7 @@ export default async function Home() {
                         <p className="text-xl">
                             To quickly get started create an account here
                         </p>
-                        <Link href="/auth/login" className="bg-[#2C40BD] h-8 px-6 py-2 rounded-xl flex items-center justify-center text-lg w-fit">Get started</Link>
+                        <Link href="/sign-in" className="bg-[#2C40BD] h-8 px-6 py-2 rounded-xl flex items-center justify-center text-lg w-fit">Get started</Link>
                     </div>
                 )}
 

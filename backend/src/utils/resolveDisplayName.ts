@@ -1,25 +1,24 @@
-export interface TokenClaims {
-  sub: string;
-  name?: string;
-  nickname?: string;
-  [key: string]: unknown;
+export interface ClerkUserClaims {
+  userId: string;
+  fullName?: string | null;
+  primaryEmailAddress?: string | null;
 }
 
-//Resolves a human-readable display name from Auth0 token claims. Priority: name -> nickname -> sub
-export function resolveDisplayName(claims: TokenClaims): string {
-  if (typeof claims.name === 'string') {
-    const trimmed = claims.name.trim();
+// Resolves a human-readable display name from Clerk user claims. Priority: fullName → primaryEmailAddress → userId
+export function resolveDisplayName(claims: ClerkUserClaims): string {
+  if (typeof claims.fullName === 'string') {
+    const trimmed = claims.fullName.trim();
     if (trimmed.length > 0) {
       return trimmed;
     }
   }
 
-  if (typeof claims.nickname === 'string') {
-    const trimmed = claims.nickname.trim();
+  if (typeof claims.primaryEmailAddress === 'string') {
+    const trimmed = claims.primaryEmailAddress.trim();
     if (trimmed.length > 0) {
       return trimmed;
     }
   }
 
-  return claims.sub;
+  return claims.userId;
 }

@@ -1,7 +1,7 @@
 import RaceContentTabs, {PredictionCheckResponse} from "@/components/RaceContentTabs";
 import {OpenF1Meeting, ScoresResponse, LeaderboardEntry} from "@/libs/types";
 import Image from "next/image";
-import {auth0} from "@/libs/auth0";
+import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
 
 export type PredictionWindowStatus = {
@@ -26,21 +26,29 @@ async function getRaceDetails(raceId: string): Promise<OpenF1Meeting | null> {
     return response[0];
 }
 
-async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
-    let tokenObj;
+async function getAuthToken(): Promise<string | null> {
     try {
-        tokenObj = await auth0.getAccessToken();
+        const authObj = await auth();
+        return await authObj.getToken();
     } catch {
-        redirect(`/auth/login?returnTo=/race/${raceId}`);
+        return null;
+    }
+}
+
+async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
+    const token = await getAuthToken();
+
+    if (!token) {
+        redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 
     const res = await fetch(`http://localhost:3001/protected/prediction/check/${raceId}`, {
         cache: "no-store",
-        headers: { Authorization: `Bearer ${tokenObj.token}` },
+        headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401 || res.status === 403) {
-        redirect(`/api/auth/login?returnTo=/race/${raceId}`);
+        redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 
     if (!res.ok) return null;
@@ -78,17 +86,13 @@ async function fetchLeaderboard(raceId: string, token: string): Promise<Leaderbo
 }
 
 async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowStatus | null> {
-    let tokenObj;
-    try {
-        tokenObj = await auth0.getAccessToken();
-    } catch {
-        return null;
-    }
+    const token = await getAuthToken();
+    if (!token) return null;
 
     try {
         const res = await fetch(`http://localhost:3001/protected/prediction-window/${raceId}`, {
             cache: "no-store",
-            headers: { Authorization: `Bearer ${tokenObj.token}` },
+            headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return null;
         return await res.json();
@@ -96,8 +100,6 @@ async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowSt
         return null;
     }
 }
-
-
 
 export default async function SpecificRace({ params }: Props) {
     const { raceId } = await params;
@@ -109,27 +111,21 @@ export default async function SpecificRace({ params }: Props) {
 
     if(!raceDetails || !predictionStatus) return null;
 
-    // Get current user ID from session for leaderboard highlighting
-    const session = await auth0.getSession();
-    const currentUserId = session?.user?.sub ?? "";
+    // Get current user ID from Clerk auth for leaderboard highlighting
+    const authObj = await auth();
+    const currentUserId = authObj.userId ?? "";
 
     // Fetch scores and leaderboard if the user has submitted predictions
     let scoresResponse: ScoresResponse | null = null;
     let leaderboardResponse: LeaderboardResponse | null = null;
 
     if (predictionStatus.submitted) {
-        let tokenObj;
-        try {
-            tokenObj = await auth0.getAccessToken();
-        } catch {
-            // Token fetch failed — fall back to submitted-only state
-            tokenObj = null;
-        }
+        const token = await getAuthToken();
 
-        if (tokenObj?.token) {
+        if (token) {
             [scoresResponse, leaderboardResponse] = await Promise.all([
-                fetchScores(raceId, tokenObj.token),
-                fetchLeaderboard(raceId, tokenObj.token),
+                fetchScores(raceId, token),
+                fetchLeaderboard(raceId, token),
             ]);
         }
     }
@@ -162,4 +158,3 @@ export default async function SpecificRace({ params }: Props) {
         </div>
     )
 }
-

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { Auth0Provider } from "@auth0/nextjs-auth0/client";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from "@/auth/AuthContext";
 
 const geistSans = Geist({
@@ -30,12 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[1A1A1A]`}
       >
-        <Auth0Provider>
+        <ClerkProvider>
           <AuthProvider>
             <Navbar />
             {children}
           </AuthProvider>
-        </Auth0Provider>
+        </ClerkProvider>
       </body>
     </html>
   );

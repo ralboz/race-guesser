@@ -6,7 +6,7 @@ import UserPrediction from '../models/UserPrediction';
 import RaceResult from '../models/RaceResult';
 import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
-import {jwtCheck} from "../middleware/auth";
+import { requireAuth } from '../middleware/auth';
 
 import { fetchQualifyingPoleDriver } from '../scoring/fetchQualifyingPoleDriver';
 import { fetchRacePositions } from '../scoring/fetchRacePositions';
@@ -25,10 +25,10 @@ function numberToPosType(n: number): PositionType {
 }
 const router = express.Router();
 
-router.use(jwtCheck);
+router.use(requireAuth());
 
 router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
-    const userId = req.auth?.payload.sub;
+    const userId = req.auth?.userId;
     if (!userId || userId !== process.env.ADMIN_ID) return res.sendStatus(403);
 
     const raceId = req.params.raceId;

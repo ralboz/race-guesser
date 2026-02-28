@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { fn, col, Op } from 'sequelize';
-import { jwtCheck } from '../middleware/auth';
+import { requireAuth, getAuth } from '../middleware/auth';
 import { syncUserProfile } from '../middleware/syncUserProfile';
 import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
 import PredictionScore from '../models/PredictionScore';
@@ -25,20 +25,14 @@ async function getUserGroupId(userId: string): Promise<number | null> {
 
 const router = express.Router();
 
-router.use(jwtCheck);
+router.use(requireAuth());
 router.use(syncUserProfile);
 
-router.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'This is a protected endpoint',
-    user: req.auth
-  });
-});
 
 // Get user's group (owned or member)
 router.get('/group', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -79,7 +73,7 @@ router.get('/group', async (req: Request, res: Response) => {
 // Create a new group
 router.post('/create-group', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -124,7 +118,7 @@ router.post('/create-group', async (req: Request, res: Response) => {
 // Add a prediction
 router.post('/prediction/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -175,7 +169,7 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
 
 router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const { raceId } = req.params;
@@ -198,7 +192,7 @@ router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
 // Join a group
 router.post('/join-group', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -280,7 +274,7 @@ router.get('/predictions/:groupId/:raceId', async (req: Request, res: Response) 
 // Get user's prediction scores for a race
 router.get('/scores/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -345,7 +339,7 @@ router.get('/scores/:raceId', async (req: Request, res: Response) => {
 // Get season ALL RACES leaderboard for user's group 
 router.get('/leaderboard/season', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -444,7 +438,7 @@ router.get('/leaderboard/season', async (req: Request, res: Response) => {
 // Get race leaderboard for user's group
 router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

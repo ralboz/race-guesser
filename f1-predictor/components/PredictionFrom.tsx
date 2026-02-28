@@ -1,7 +1,7 @@
 'use client';
 import { useState, ChangeEvent } from 'react';
 import {DRIVERS_2026} from "@/libs/consts";
-import { getAccessToken } from "@auth0/nextjs-auth0"
+import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
 import { PositionScore } from "@/libs/types";
 import { getScoreColor } from "@/libs/utils";
@@ -23,6 +23,7 @@ type Props = {
 }
 
 export default function PredictionsForm({ raceId, loadedFormData, scoreData, windowDisabled }: Props) {
+    const { getToken } = useAuth();
     const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
@@ -54,7 +55,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
 
     async function savePrediction() {
         try {
-            const token = await getAccessToken();
+            const token = await getToken();
 
             const res = await fetch(`http://localhost:3001/protected/prediction/${raceId}`, {
                 method: 'POST',
