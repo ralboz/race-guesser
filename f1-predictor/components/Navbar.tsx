@@ -25,7 +25,7 @@ export default function Navbar() {
     }
 
     return (
-        <nav className="flex bg-[202020] h-16 items-center justify-between">
+        <nav className="flex bg-[#202020] h-16 items-center justify-between">
             <div className="flex">
                 {links.map((link) => (
                     <Link
@@ -39,8 +39,8 @@ export default function Navbar() {
             </div>
             {!isLoggedIn ?
                 <div className="flex">
-                    <Link href="/auth/login" className={`mx-4 p-2 rounded  ${pathname === "login" ? 'text-blue-600' : ''}`}>Login</Link>
-                    <Link href="/auth/login" className={`mx-4 p-2 rounded  ${pathname === "sign-up" ? 'text-blue-600' : ''}`}>Signup</Link>
+                    <Link href="/sign-in" className={`mx-4 p-2 rounded  ${pathname === "/sign-in" ? 'text-blue-600' : ''}`}>Login</Link>
+                    <Link href="/sign-up" className={`mx-4 p-2 rounded  ${pathname === "/sign-up" ? 'text-blue-600' : ''}`}>Signup</Link>
                 </div>
                 :
                 <button className={`mx-4 p-2 rounded  ${pathname === "logout" ? 'text-blue-600' : ''}`} onClick={handleLogout}>Logout</button>

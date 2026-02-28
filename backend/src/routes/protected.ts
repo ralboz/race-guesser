@@ -1,12 +1,33 @@
 import express, { Request, Response } from 'express';
 import { fn, col, Op } from 'sequelize';
-import { jwtCheck } from '../middleware/auth';
+import rateLimit from 'express-rate-limit';
+import { requireAuth, getAuth } from '../middleware/auth';
 import { syncUserProfile } from '../middleware/syncUserProfile';
 import { Group, UserPrediction, GroupMember, UserProfile } from '../models';
 import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 import { hashPassword, verifyPassword } from '../utils/password';
+import { getPredictionWindow } from '../services/predictionWindowService';
+import { validDriverNames } from '../data';
+
+// 20 requests every 15 mins
+const mutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' }
+});
+
+// 5 requests every 15 mins
+const joinGroupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many join attempts, please try again later.' }
+});
 
 //Look up the group a user belongs to (as owner or member)
 async function getUserGroupId(userId: string): Promise<number | null> {
@@ -24,20 +45,14 @@ async function getUserGroupId(userId: string): Promise<number | null> {
 
 const router = express.Router();
 
-router.use(jwtCheck);
+router.use(requireAuth());
 router.use(syncUserProfile);
 
-router.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'This is a protected endpoint',
-    user: req.auth
-  });
-});
 
 // Get user's group (owned or member)
 router.get('/group', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -76,9 +91,9 @@ router.get('/group', async (req: Request, res: Response) => {
 });
 
 // Create a new group
-router.post('/create-group', async (req: Request, res: Response) => {
+router.post('/create-group', mutationLimiter, async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -91,19 +106,19 @@ router.post('/create-group', async (req: Request, res: Response) => {
     if(group_type !== 'private' && group_type !== 'public') return res.status(400).json({ message: 'Group type must be either private or public'});
     if(group_type === 'private' && !password) return res.status(400).json({ message: 'Password is required for private groups' });
 
-    const generateRandomId = async () => {
-      const min = 1000;
-      const max = 1000000;
-      const randomId = Math.floor(Math.random() * (max - min + 1)) + min;
-
-      const existingGroup = await Group.findByPk(randomId);
-      if (existingGroup) {
-        return generateRandomId();
+    const MAX_ID_ATTEMPTS = 20;
+    let groupId: number | null = null;
+    for (let attempt = 0; attempt < MAX_ID_ATTEMPTS; attempt++) {
+      const candidate = Math.floor(Math.random() * (1000000 - 1000 + 1)) + 1000;
+      const existing = await Group.findByPk(candidate);
+      if (!existing) {
+        groupId = candidate;
+        break;
       }
-      return randomId;
-    };
-
-    const groupId = await generateRandomId();
+    }
+    if (groupId === null) {
+      return res.status(503).json({ message: 'Unable to generate a unique group ID. Please try again.' });
+    }
 
     const newGroup = await Group.create({
       id: groupId,
@@ -121,13 +136,27 @@ router.post('/create-group', async (req: Request, res: Response) => {
 });
 
 // Add a prediction
-router.post('/prediction/:raceId', async (req: Request, res: Response) => {
+router.post('/prediction/:raceId', mutationLimiter, async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
     const raceId = req.params.raceId;
+
+    // Validate prediction window before processing
+    try {
+      const window = await getPredictionWindow(raceId as string);
+      if (window.status === 'closed') {
+        return res.status(403).json({ message: 'Predictions are closed for this race' });
+      }
+      if (window.status === 'not_yet_open') {
+        return res.status(403).json({ message: 'Predictions are not yet open for this race' });
+      }
+    } catch (windowError) {
+      return res.status(503).json({ message: 'Unable to verify prediction window. Please try again later.' });
+    }
+
     const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 } = req.body;
 
     const group_id = await getUserGroupId(userId);
@@ -140,6 +169,12 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
     const missing = Object.entries(positions).find(([key, val]) => !val || val.trim() === '');
     if (missing) {
       return res.status(400).json({ message: `Missing prediction for ${missing[0]}` });
+    }
+
+    // Validate all driver names against the known driver list
+    const invalidEntry = Object.entries(positions).find(([, name]) => !validDriverNames.has(name.trim()));
+    if (invalidEntry) {
+      return res.status(400).json({ message: `Invalid driver name: "${invalidEntry[1].trim()}"` });
     }
 
     const predictionsData: UserPredictionCreationAttributes[] = Object.entries(positions).map(([position_type, driver_name]) => ({
@@ -160,7 +195,7 @@ router.post('/prediction/:raceId', async (req: Request, res: Response) => {
 
 router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const { raceId } = req.params;
@@ -181,9 +216,9 @@ router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
 });
 
 // Join a group
-router.post('/join-group', async (req: Request, res: Response) => {
+router.post('/join-group', joinGroupLimiter, async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'User ID is required' });
     }
@@ -265,7 +300,7 @@ router.get('/predictions/:groupId/:raceId', async (req: Request, res: Response) 
 // Get user's prediction scores for a race
 router.get('/scores/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -330,7 +365,7 @@ router.get('/scores/:raceId', async (req: Request, res: Response) => {
 // Get season ALL RACES leaderboard for user's group 
 router.get('/leaderboard/season', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -429,7 +464,7 @@ router.get('/leaderboard/season', async (req: Request, res: Response) => {
 // Get race leaderboard for user's group
 router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   try {
-    const userId = req.auth?.payload.sub;
+    const userId = getAuth(req).userId;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -496,6 +531,21 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({ message: 'Error fetching leaderboard' });
+  }
+});
+
+// returns prediction time window for race.
+router.get('/prediction-window/:raceId', async (req: Request, res: Response) => {
+  try {
+    const raceId = req.params.raceId;
+    const window = await getPredictionWindow(raceId as string);
+    return res.json({
+      status: window.status,
+      openTime: window.openTime.toISOString(),
+      closeTime: window.closeTime.toISOString(),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Unable to determine prediction window for this race' });
   }
 });
 

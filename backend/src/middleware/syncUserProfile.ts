@@ -1,31 +1,36 @@
 import { Request, Response, NextFunction } from 'express';
-import { resolveDisplayName, TokenClaims } from '../utils/resolveDisplayName';
+import { clerkClient, getAuth } from '@clerk/express';
+import { resolveDisplayName, ClerkUserClaims } from '../utils/resolveDisplayName';
 import UserProfile from '../models/UserProfile';
 
-// Middleware that syncs the user's display name from JWT claims to the database.
+// Middleware that syncs the user's display name from Clerk to the database.
 async function syncUserProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const payload = req.auth?.payload;
-    if (!payload?.sub) {
+    const auth = getAuth(req);
+    const userId = auth.userId;
+    if (!userId) {
       next();
       return;
     }
 
-    const namespace = 'https://f1-predictor.com/';
-    const nameValue = payload[`${namespace}name`];
-    const nicknameValue = payload[`${namespace}nickname`];
+    let claims: ClerkUserClaims = { userId };
 
-    const claims: TokenClaims = {
-      sub: payload.sub,
-      name: typeof nameValue === 'string' ? nameValue : undefined,
-      nickname: typeof nicknameValue === 'string' ? nicknameValue : undefined,
-    };
+    try {
+      const user = await clerkClient.users.getUser(userId);
+      claims = {
+        userId,
+        fullName: user.fullName,
+        primaryEmailAddress: user.primaryEmailAddress?.emailAddress ?? null,
+      };
+    } catch (error) {
+      console.error('Failed to fetch Clerk user details:', error);
+    }
 
     const displayName = resolveDisplayName(claims);
     req.displayName = displayName;
 
     UserProfile.upsert({
-      user_id: payload.sub,
+      user_id: userId,
       display_name: displayName,
       updated_at: new Date(),
     }).catch((error) => {

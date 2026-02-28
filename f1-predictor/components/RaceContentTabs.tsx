@@ -6,6 +6,8 @@ import { PredictionFormData } from '@/components/PredictionFrom';
 import PredictionsForm from '@/components/PredictionFrom';
 import ScoreSummary from '@/components/ScoreSummary';
 import MiniLeaderboard from '@/components/MiniLeaderboard';
+import PredictionWindowBanner from '@/components/PredictionWindowBanner';
+import { PredictionWindowStatus } from '@/app/race/[raceId]/page';
 
 export interface PredictionCheckResponse {
     submitted: boolean;
@@ -22,6 +24,7 @@ type RaceContentTabsProps = {
     scoresResponse: ScoresResponse | null;
     leaderboard: LeaderboardEntry[];
     currentUserId: string;
+    windowStatus: PredictionWindowStatus | null;
 };
 
 export default function RaceContentTabs({
@@ -31,8 +34,10 @@ export default function RaceContentTabs({
     scoresResponse,
     leaderboard,
     currentUserId,
+    windowStatus,
 }: RaceContentTabsProps) {
     const [activeTab, setActiveTab] = useState<TabId>('predictions');
+    const windowDisabled = windowStatus?.status === 'closed' || windowStatus?.status === 'not_yet_open';
 
     const tabs: { id: TabId; label: string }[] = [
         { id: 'predictions', label: 'My Predictions' },
@@ -77,8 +82,11 @@ export default function RaceContentTabs({
             >
                 {activeTab === 'predictions' && (
                     <div>
+                        <div className="pt-4 px-6">
+                            <PredictionWindowBanner windowStatus={windowStatus} />
+                        </div>
                         {!predictionStatus.submitted && (
-                            <PredictionsForm raceId={raceId} />
+                            <PredictionsForm raceId={raceId} windowDisabled={windowDisabled} />
                         )}
                         {predictionStatus.submitted && !hasResults && (
                             <div className="pt-2">

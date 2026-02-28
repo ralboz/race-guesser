@@ -2,28 +2,34 @@ import {Group, OpenF1Meeting} from "@/libs/types";
 import {RaceCard} from "@/components/RaceCard";
 import { FaCopy } from "react-icons/fa";
 import {NoGroupSection} from "@/components/NoGroupSection";
-import {auth0} from "@/libs/auth0";
+import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
+import { API_URL } from "@/libs/api";
 
 async function getUserGroup(): Promise<Group | null> {
-    let tokenObj;
+    let token;
     try {
-        tokenObj = await auth0.getAccessToken();
+        const authObj = await auth();
+        token = await authObj.getToken();
     } catch {
-        redirect(`/auth/login?returnTo=/groups`);
+        redirect(`/sign-in?redirect_url=/groups`);
+    }
+
+    if (!token) {
+        redirect(`/sign-in?redirect_url=/groups`);
     }
 
     try {
-        const res = await fetch('http://localhost:3001/protected/group', {
+        const res = await fetch(`${API_URL}/protected/group`, {
             cache: 'no-store',
             headers: {
-                Authorization: `bearer ${tokenObj.token}`,
+                Authorization: `Bearer ${token}`,
             },
-            next: { revalidate: 3600 },
         });
 
         if (!res.ok) {
-            console.error('Backend error:', res.status, await res.text());
+            const errorText = await res.text();
+            console.error('Backend error fetching group:', res.status, errorText);
             return null;
         }
 
@@ -98,7 +104,7 @@ export default async function Groups() {
                 </div>
             ) : (
                 <div>
-                    <h1 className="text-3xl">You aren’t in a group yet! Do you want to join or create one?</h1>
+                    <h1 className="text-3xl">You aren't in a group yet! Do you want to join or create one?</h1>
                     <NoGroupSection />
                 </div>
             )}

@@ -2,11 +2,14 @@
 
 import {useState} from "react";
 import {createPortal} from "react-dom";
+import { useRouter } from "next/navigation";
 import { IoMdClose } from "react-icons/io";
 import axios from 'axios';
-import { getAccessToken } from "@auth0/nextjs-auth0";
+import { useAuth } from "@clerk/nextjs";
+import { API_URL } from "@/libs/api";
 
-const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
+const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
+    const { getToken } = useAuth();
     const [groupId, setGroupId] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,9 +25,9 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
         setError('');
 
         try {
-            const token = await getAccessToken();
+            const token = await getToken();
 
-            const response = await axios.post("http://localhost:3001/protected/join-group", {
+            const response = await axios.post(`${API_URL}/protected/join-group`, {
                 groupId,
                 groupPassword: password
             }, {
@@ -35,6 +38,7 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
 
             console.log('Successfully joined group:', response.data);
             onClose();
+            onSuccess();
         } catch (err: any) {
             console.error('Error joining group:', err);
             setError(err.response?.data?.message || 'Failed to join group');
@@ -89,7 +93,8 @@ const JoinGroupModal = ({ onClose }: { onClose: () => void }) => {
     );
 };
 
-const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
+const CreateGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
+    const { getToken } = useAuth();
     const [groupName, setGroupName] = useState('');
     const [groupType, setGroupType] = useState('private');
     const [password, setPassword] = useState('');
@@ -110,9 +115,9 @@ const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
         setLoading(true);
         setError('');
         try {
-            const token = await getAccessToken();
+            const token = await getToken();
 
-            const response = await axios.post("http://localhost:3001/protected/create-group", {
+            const response = await axios.post(`${API_URL}/protected/create-group`, {
                 group_name: groupName,
                 group_type: groupType,
                 password: groupType === 'private' ? password : null
@@ -124,6 +129,7 @@ const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
 
             console.log('Successfully created group:', response.data);
             onClose();
+            onSuccess();
         } catch (err: any) {
             console.error('Error creating group:', err);
             setError(err.response?.data?.message || 'Failed to create group');
@@ -209,8 +215,13 @@ const CreateGroupModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 export const NoGroupSection = () => {
+    const router = useRouter();
     const [joinOpen, setJoinOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
+
+    const handleSuccess = () => {
+        router.refresh();
+    };
 
     return (
 
@@ -220,11 +231,11 @@ export const NoGroupSection = () => {
                 <button className="w-64 h-14 text-xl rounded-lg bg-[#2C40BD]" onClick={() => setCreateOpen(true)}>Create Group</button>
             </div>
             {joinOpen && createPortal(
-                <JoinGroupModal onClose={() => setJoinOpen(false)} />,
+                <JoinGroupModal onClose={() => setJoinOpen(false)} onSuccess={handleSuccess} />,
                 document.body
             )}
             {createOpen && createPortal(
-                <CreateGroupModal onClose={() => setCreateOpen(false)} />,
+                <CreateGroupModal onClose={() => setCreateOpen(false)} onSuccess={handleSuccess} />,
                 document.body
             )}
         </>

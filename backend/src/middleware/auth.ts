@@ -1,9 +1,3 @@
-import { auth } from 'express-oauth2-jwt-bearer';
+import { clerkMiddleware, requireAuth, getAuth } from '@clerk/express';
 
-const jwtCheck = auth({
-  audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-  tokenSigningAlg: 'RS256'
-});
-
-export { jwtCheck };
+export { clerkMiddleware, requireAuth, getAuth };

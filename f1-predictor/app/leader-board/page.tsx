@@ -1,7 +1,8 @@
-import { auth0 } from "@/libs/auth0";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SeasonLeaderboardEntry } from "@/libs/types";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
+import { API_URL } from "@/libs/api";
 
 interface SeasonLeaderboardResponse {
   leaderboard: SeasonLeaderboardEntry[];
@@ -9,16 +10,16 @@ interface SeasonLeaderboardResponse {
 }
 
 export default async function LeaderBoardPage() {
-  let tokenObj;
-  try {
-    tokenObj = await auth0.getAccessToken();
-  } catch {
-    redirect("/auth/login?returnTo=/leader-board");
+  const authObj = await auth();
+  const token = await authObj.getToken();
+
+  if (!token) {
+    redirect("/sign-in?redirect_url=/leader-board");
   }
 
-  const groupRes = await fetch("http://localhost:3001/protected/group", {
+  const groupRes = await fetch(`${API_URL}/protected/group`, {
     cache: "no-store",
-    headers: { Authorization: `Bearer ${tokenObj.token}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!groupRes.ok) {
@@ -31,9 +32,9 @@ export default async function LeaderBoardPage() {
   }
 
   // Fetch season leaderboard
-  const leaderboardRes = await fetch("http://localhost:3001/protected/leaderboard/season", {
+  const leaderboardRes = await fetch(`${API_URL}/protected/leaderboard/season`, {
     cache: "no-store",
-    headers: { Authorization: `Bearer ${tokenObj.token}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!leaderboardRes.ok) {
@@ -42,9 +43,8 @@ export default async function LeaderBoardPage() {
 
   const { leaderboard, raceCount }: SeasonLeaderboardResponse = await leaderboardRes.json();
 
-  // Get current user ID from session
-  const session = await auth0.getSession();
-  const currentUserId = session?.user?.sub ?? "";
+  // Get current user ID from Clerk auth
+  const currentUserId = authObj.userId ?? "";
 
   return (
     <div className="max-w-2xl mx-auto p-4">

@@ -1,8 +1,9 @@
 'use client';
 import { useState, ChangeEvent } from 'react';
 import {DRIVERS_2026} from "@/libs/consts";
-import { getAccessToken } from "@auth0/nextjs-auth0"
+import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
+import { API_URL } from "@/libs/api";
 import { PositionScore } from "@/libs/types";
 import { getScoreColor } from "@/libs/utils";
 
@@ -19,9 +20,11 @@ type Props = {
     raceId: string;
     loadedFormData?: PredictionFormData | null; //if this is passed, form will be in prefilled disabled mode
     scoreData?: PositionScore[] | null; //if this is passed, form will be in results mode with color-coded backgrounds
+    windowDisabled?: boolean; //if true, form inputs and submit are disabled due to prediction window
 }
 
-export default function PredictionsForm({ raceId, loadedFormData, scoreData }: Props) {
+export default function PredictionsForm({ raceId, loadedFormData, scoreData, windowDisabled }: Props) {
+    const { getToken } = useAuth();
     const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
@@ -53,9 +56,9 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
 
     async function savePrediction() {
         try {
-            const token = await getAccessToken();
+            const token = await getToken();
 
-            const res = await fetch(`http://localhost:3001/protected/prediction/${raceId}`, {
+            const res = await fetch(`${API_URL}/protected/prediction/${raceId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -93,7 +96,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
         }).sort((a, b) => a.number - b.number);
 
     const isResultsMode = !!scoreData && scoreData.length > 0;
-    const isDisabled = isLoading || !!loadedFormData || isResultsMode;
+    const isDisabled = isLoading || !!loadedFormData || isResultsMode || !!windowDisabled;
 
     const getScoreForPosition = (positionKey: string): PositionScore | undefined => {
         if (!scoreData) return undefined;
@@ -141,8 +144,8 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData }: P
                     (
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+                            disabled={isLoading || !!windowDisabled}
+                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Submitting...' : 'Submit Predictions'}
                         </button>

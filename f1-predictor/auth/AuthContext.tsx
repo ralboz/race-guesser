@@ -1,6 +1,6 @@
 'use client';
-import { createContext, useContext, ReactNode } from 'react';
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { createContext, useContext, useCallback, ReactNode } from 'react';
+import { useUser, useClerk } from '@clerk/nextjs';
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -12,19 +12,20 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
+  const { isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
 
-  const login = () => {
-    window.location.href = '/auth/login';
-  };
+  const login = useCallback(() => {
+    window.location.href = '/sign-in';
+  }, []);
 
-  const logout = () => {
-    window.location.href = '/auth/logout';
-  };
+  const logout = useCallback(() => {
+    signOut({ redirectUrl: '/' });
+  }, [signOut]);
 
   return (
     <AuthContext.Provider value={{ 
-      isLoggedIn: !!user, 
+      isLoggedIn: !!isSignedIn, 
       user,
       login, 
       logout

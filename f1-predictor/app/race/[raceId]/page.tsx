@@ -1,8 +1,15 @@
 import RaceContentTabs, {PredictionCheckResponse} from "@/components/RaceContentTabs";
 import {OpenF1Meeting, ScoresResponse, LeaderboardEntry} from "@/libs/types";
 import Image from "next/image";
-import {auth0} from "@/libs/auth0";
+import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
+import { API_URL } from "@/libs/api";
+
+export type PredictionWindowStatus = {
+    status: 'not_yet_open' | 'open' | 'closed';
+    openTime: string;
+    closeTime: string;
+};
 
 type Props = {
     params: Promise<{ raceId: string }>
@@ -20,21 +27,29 @@ async function getRaceDetails(raceId: string): Promise<OpenF1Meeting | null> {
     return response[0];
 }
 
-async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
-    let tokenObj;
+async function getAuthToken(): Promise<string | null> {
     try {
-        tokenObj = await auth0.getAccessToken();
+        const authObj = await auth();
+        return await authObj.getToken();
     } catch {
-        redirect(`/auth/login?returnTo=/race/${raceId}`);
+        return null;
+    }
+}
+
+async function userPredictionStatus(raceId: string): Promise<PredictionCheckResponse | null> {
+    const token = await getAuthToken();
+
+    if (!token) {
+        redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 
-    const res = await fetch(`http://localhost:3001/protected/prediction/check/${raceId}`, {
+    const res = await fetch(`${API_URL}/protected/prediction/check/${raceId}`, {
         cache: "no-store",
-        headers: { Authorization: `Bearer ${tokenObj.token}` },
+        headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401 || res.status === 403) {
-        redirect(`/api/auth/login?returnTo=/race/${raceId}`);
+        redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 
     if (!res.ok) return null;
@@ -43,7 +58,7 @@ async function userPredictionStatus(raceId: string): Promise<PredictionCheckResp
 
 async function fetchScores(raceId: string, token: string): Promise<ScoresResponse | null> {
     try {
-        const res = await fetch(`http://localhost:3001/protected/scores/${raceId}`, {
+        const res = await fetch(`${API_URL}/protected/scores/${raceId}`, {
             cache: "no-store",
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -60,7 +75,7 @@ interface LeaderboardResponse {
 
 async function fetchLeaderboard(raceId: string, token: string): Promise<LeaderboardResponse | null> {
     try {
-        const res = await fetch(`http://localhost:3001/protected/leaderboard/${raceId}`, {
+        const res = await fetch(`${API_URL}/protected/leaderboard/${raceId}`, {
             cache: "no-store",
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -71,37 +86,47 @@ async function fetchLeaderboard(raceId: string, token: string): Promise<Leaderbo
     }
 }
 
+async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowStatus | null> {
+    const token = await getAuthToken();
+    if (!token) return null;
+
+    try {
+        const res = await fetch(`${API_URL}/protected/prediction-window/${raceId}`, {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
 
 export default async function SpecificRace({ params }: Props) {
     const { raceId } = await params;
-    const [raceDetails, predictionStatus] = await Promise.all([
+    const [raceDetails, predictionStatus, windowStatus] = await Promise.all([
         getRaceDetails(raceId),
-        userPredictionStatus(raceId)
+        userPredictionStatus(raceId),
+        fetchPredictionWindow(raceId)
     ]);
 
     if(!raceDetails || !predictionStatus) return null;
 
-    // Get current user ID from session for leaderboard highlighting
-    const session = await auth0.getSession();
-    const currentUserId = session?.user?.sub ?? "";
+    // Get current user ID from Clerk auth for leaderboard highlighting
+    const authObj = await auth();
+    const currentUserId = authObj.userId ?? "";
 
     // Fetch scores and leaderboard if the user has submitted predictions
     let scoresResponse: ScoresResponse | null = null;
     let leaderboardResponse: LeaderboardResponse | null = null;
 
     if (predictionStatus.submitted) {
-        let tokenObj;
-        try {
-            tokenObj = await auth0.getAccessToken();
-        } catch {
-            // Token fetch failed — fall back to submitted-only state
-            tokenObj = null;
-        }
+        const token = await getAuthToken();
 
-        if (tokenObj?.token) {
+        if (token) {
             [scoresResponse, leaderboardResponse] = await Promise.all([
-                fetchScores(raceId, tokenObj.token),
-                fetchLeaderboard(raceId, tokenObj.token),
+                fetchScores(raceId, token),
+                fetchLeaderboard(raceId, token),
             ]);
         }
     }
@@ -129,8 +154,8 @@ export default async function SpecificRace({ params }: Props) {
                 scoresResponse={scoresResponse}
                 leaderboard={leaderboardResponse?.leaderboard ?? []}
                 currentUserId={currentUserId}
+                windowStatus={windowStatus}
             />
         </div>
     )
 }
-

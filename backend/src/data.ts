@@ -47,3 +47,8 @@ export const driverNumToNameMap: Record<number, string> = raceDrivers2026.reduce
     },
     {} as Record<number, string>
 );
+
+export const validDriverNames: ReadonlySet<string> = new Set([
+    ...raceDrivers2026.map(d => d.driverName),
+    ...potentialStandIns2026.map(d => d.driverName),
+]);
