@@ -4,6 +4,7 @@ import { FaCopy } from "react-icons/fa";
 import {NoGroupSection} from "@/components/NoGroupSection";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
+import { API_URL } from "@/libs/api";
 
 async function getUserGroup(): Promise<Group | null> {
     let token;
@@ -19,7 +20,7 @@ async function getUserGroup(): Promise<Group | null> {
     }
 
     try {
-        const res = await fetch('http://localhost:3001/protected/group', {
+        const res = await fetch(`${API_URL}/protected/group`, {
             cache: 'no-store',
             headers: {
                 Authorization: `Bearer ${token}`,

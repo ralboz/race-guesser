@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { IoMdClose } from "react-icons/io";
 import axios from 'axios';
 import { useAuth } from "@clerk/nextjs";
+import { API_URL } from "@/libs/api";
 
 const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
     const { getToken } = useAuth();
@@ -26,7 +27,7 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
         try {
             const token = await getToken();
 
-            const response = await axios.post("http://localhost:3001/protected/join-group", {
+            const response = await axios.post(`${API_URL}/protected/join-group`, {
                 groupId,
                 groupPassword: password
             }, {
@@ -116,7 +117,7 @@ const CreateGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSucce
         try {
             const token = await getToken();
 
-            const response = await axios.post("http://localhost:3001/protected/create-group", {
+            const response = await axios.post(`${API_URL}/protected/create-group`, {
                 group_name: groupName,
                 group_type: groupType,
                 password: groupType === 'private' ? password : null

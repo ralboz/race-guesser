@@ -3,6 +3,7 @@ import { useState, ChangeEvent } from 'react';
 import {DRIVERS_2026} from "@/libs/consts";
 import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
+import { API_URL } from "@/libs/api";
 import { PositionScore } from "@/libs/types";
 import { getScoreColor } from "@/libs/utils";
 
@@ -57,7 +58,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
         try {
             const token = await getToken();
 
-            const res = await fetch(`http://localhost:3001/protected/prediction/${raceId}`, {
+            const res = await fetch(`${API_URL}/protected/prediction/${raceId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

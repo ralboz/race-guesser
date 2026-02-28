@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SeasonLeaderboardEntry } from "@/libs/types";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
+import { API_URL } from "@/libs/api";
 
 interface SeasonLeaderboardResponse {
   leaderboard: SeasonLeaderboardEntry[];
@@ -16,7 +17,7 @@ export default async function LeaderBoardPage() {
     redirect("/sign-in?redirect_url=/leader-board");
   }
 
-  const groupRes = await fetch("http://localhost:3001/protected/group", {
+  const groupRes = await fetch(`${API_URL}/protected/group`, {
     cache: "no-store",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -31,7 +32,7 @@ export default async function LeaderBoardPage() {
   }
 
   // Fetch season leaderboard
-  const leaderboardRes = await fetch("http://localhost:3001/protected/leaderboard/season", {
+  const leaderboardRes = await fetch(`${API_URL}/protected/leaderboard/season`, {
     cache: "no-store",
     headers: { Authorization: `Bearer ${token}` },
   });

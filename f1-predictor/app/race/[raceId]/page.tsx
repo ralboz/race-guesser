@@ -3,6 +3,7 @@ import {OpenF1Meeting, ScoresResponse, LeaderboardEntry} from "@/libs/types";
 import Image from "next/image";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
+import { API_URL } from "@/libs/api";
 
 export type PredictionWindowStatus = {
     status: 'not_yet_open' | 'open' | 'closed';
@@ -42,7 +43,7 @@ async function userPredictionStatus(raceId: string): Promise<PredictionCheckResp
         redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 
-    const res = await fetch(`http://localhost:3001/protected/prediction/check/${raceId}`, {
+    const res = await fetch(`${API_URL}/protected/prediction/check/${raceId}`, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -57,7 +58,7 @@ async function userPredictionStatus(raceId: string): Promise<PredictionCheckResp
 
 async function fetchScores(raceId: string, token: string): Promise<ScoresResponse | null> {
     try {
-        const res = await fetch(`http://localhost:3001/protected/scores/${raceId}`, {
+        const res = await fetch(`${API_URL}/protected/scores/${raceId}`, {
             cache: "no-store",
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -74,7 +75,7 @@ interface LeaderboardResponse {
 
 async function fetchLeaderboard(raceId: string, token: string): Promise<LeaderboardResponse | null> {
     try {
-        const res = await fetch(`http://localhost:3001/protected/leaderboard/${raceId}`, {
+        const res = await fetch(`${API_URL}/protected/leaderboard/${raceId}`, {
             cache: "no-store",
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -90,7 +91,7 @@ async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowSt
     if (!token) return null;
 
     try {
-        const res = await fetch(`http://localhost:3001/protected/prediction-window/${raceId}`, {
+        const res = await fetch(`${API_URL}/protected/prediction-window/${raceId}`, {
             cache: "no-store",
             headers: { Authorization: `Bearer ${token}` },
         });
