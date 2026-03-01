@@ -145,16 +145,27 @@ router.post('/prediction/:raceId', mutationLimiter, async (req: Request, res: Re
     const raceId = req.params.raceId;
 
     // Validate prediction window before processing
-    try {
-      const window = await getPredictionWindow(raceId as string);
-      if (window.status === 'closed') {
-        return res.status(403).json({ message: 'Predictions are closed for this race' });
+    const bypassWindow = process.env.BYPASS_PREDICTION_WINDOW === 'true';
+    if (!bypassWindow) {
+      try {
+        const window = await getPredictionWindow(raceId as string);
+        if (window.status === 'closed') {
+          return res.status(403).json({ message: 'Predictions are closed for this race' });
+        }
+        if (window.status === 'not_yet_open') {
+          return res.status(403).json({ message: 'Predictions are not yet open for this race' });
+        }
+      } catch (windowError) {
+        return res.status(503).json({ message: 'Unable to verify prediction window. Please try again later.' });
       }
-      if (window.status === 'not_yet_open') {
-        return res.status(403).json({ message: 'Predictions are not yet open for this race' });
-      }
-    } catch (windowError) {
-      return res.status(503).json({ message: 'Unable to verify prediction window. Please try again later.' });
+    }
+
+    // Check for existing predictions (prevent double-submit)
+    const existingCount = await UserPrediction.count({
+      where: { user_id: userId, race_identifier: raceId }
+    });
+    if (existingCount > 0) {
+      return res.status(409).json({ message: 'Predictions already submitted for this race' });
     }
 
     const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 } = req.body;
@@ -209,7 +220,7 @@ router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<'pole'|'p1'|'p2'|'p3'|'p4'|'p5'|'p6'|'p7'|'p8'|'p9'|'p10', string>);
 
-    res.json({ submitted: predictions.length === 11, predictions: userPredictions });
+    res.json({ submitted: predictions.length >= 11, predictions: userPredictions });
   } catch (error) {
     res.status(500).json({ message: 'Error checking predictions' });
   }
@@ -538,6 +549,14 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
 router.get('/prediction-window/:raceId', async (req: Request, res: Response) => {
   try {
     const raceId = req.params.raceId;
+    const bypassWindow = process.env.BYPASS_PREDICTION_WINDOW === 'true';
+    if (bypassWindow) {
+      return res.json({
+        status: 'open',
+        openTime: new Date(0).toISOString(),
+        closeTime: new Date('2099-12-31').toISOString(),
+      });
+    }
     const window = await getPredictionWindow(raceId as string);
     return res.json({
       status: window.status,

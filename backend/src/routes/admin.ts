@@ -6,7 +6,7 @@ import UserPrediction from '../models/UserPrediction';
 import RaceResult from '../models/RaceResult';
 import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, getAuth } from '../middleware/auth';
 
 import { fetchQualifyingPoleDriver } from '../scoring/fetchQualifyingPoleDriver';
 import { fetchRacePositions } from '../scoring/fetchRacePositions';
@@ -28,7 +28,7 @@ const router = express.Router();
 router.use(requireAuth());
 
 router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
-    const userId = req.auth?.userId;
+    const { userId } = getAuth(req);
     if (!userId || userId !== process.env.ADMIN_ID) return res.sendStatus(403);
 
     const raceId = req.params.raceId;
@@ -135,7 +135,7 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
                 actualNameAtSlot = actualByPosition.get(slot)!;
             }
 
-            const { base_points: basePoints, is_exact: isExact } = scorePrediction(
+            const basePoints = scorePrediction(
                 predictedName,
                 actualNameAtSlot,
                 posType,
@@ -143,7 +143,7 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
             );
 
             const uniqueCorrect =
-                isExact && (uniqueCountMap.get(`${pred.group_id}|${pred.position_type}|${predictedName}`) === 1);
+                basePoints > 0 && (uniqueCountMap.get(`${pred.group_id}|${pred.position_type}|${predictedName}`) === 1);
 
             const finalPoints = uniqueCorrect ? basePoints * 2 : basePoints;
 

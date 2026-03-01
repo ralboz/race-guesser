@@ -6,7 +6,7 @@ const raceDrivers2026: DriverStatic[] = [
     { driverNumber: 14, driverName: "Fernando Alonso" },
     { driverNumber: 18, driverName: "Lance Stroll" },
     { driverNumber: 23, driverName: "Alexander Albon" },
-    { driverNumber: 55, driverName: "Carlos Sainz" },
+    { driverNumber: 55, driverName: "Carlos Sainz Jr." },
     { driverNumber: 5, driverName: "Gabriel Bortoleto" },
     { driverNumber: 27, driverName: "Nico Hülkenberg" },
     { driverNumber: 11, driverName: "Sergio Pérez" },
@@ -18,12 +18,11 @@ const raceDrivers2026: DriverStatic[] = [
     { driverNumber: 1, driverName: "Lando Norris" },
     { driverNumber: 81, driverName: "Oscar Piastri" },
     { driverNumber: 63, driverName: "George Russell" },
-    { driverNumber: 12, driverName: "Andrea Kimi Antonelli" },
+    { driverNumber: 12, driverName: "Kimi Antonelli" },
     { driverNumber: 30, driverName: "Liam Lawson" },
     { driverNumber: 41, driverName: "Arvid Lindblad" },
     { driverNumber: 3, driverName: "Max Verstappen" },
     { driverNumber: 6, driverName: "Isack Hadjar" },
-    { driverNumber: 24, driverName: "Zhou Guanyu" }
 ];
 
 const potentialStandIns2026: DriverStatic[] = [

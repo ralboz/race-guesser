@@ -30,6 +30,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
         p5: '', p6: '', p7: '', p8: '', p9: '', p10: ''
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -47,8 +48,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
 
         if (result.success) {
             setMessage({ type: 'success', text: 'Predictions saved successfully!' });
-            // Optionally reset form or redirect
-            // setFormData({ pole: '', p1: '', p2: '', p3: '', p4: '', p5: '', p6: '', p7: '', p8: '', p9: '', p10: '' });
+            setIsSubmitted(true);
         } else {
             setMessage({ type: 'error', text: result.error || 'Failed to save predictions. Please try again.' });
         }
@@ -68,9 +68,13 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
             });
 
             if (!res.ok) {
-                const errorText = await res.text();
+                const errorData = await res.json().catch(() => null);
+                const errorText = errorData?.message || `Server error: ${res.status}`;
                 console.error('Backend error:', res.status, errorText);
-                return { success: false, error: `Server error: ${res.status}` };
+                if (res.status === 409) {
+                    return { success: false, error: 'You have already submitted predictions for this race.' };
+                }
+                return { success: false, error: errorText };
             }
 
             const data = await res.json();
@@ -96,7 +100,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
         }).sort((a, b) => a.number - b.number);
 
     const isResultsMode = !!scoreData && scoreData.length > 0;
-    const isDisabled = isLoading || !!loadedFormData || isResultsMode || !!windowDisabled;
+    const isDisabled = isLoading || !!loadedFormData || isResultsMode || !!windowDisabled || isSubmitted;
 
     const getScoreForPosition = (positionKey: string): PositionScore | undefined => {
         if (!scoreData) return undefined;
@@ -140,7 +144,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
                         </div>
                     );
                 })}
-                {!loadedFormData && !isResultsMode ?
+                {!loadedFormData && !isResultsMode && !isSubmitted ?
                     (
                         <button
                             type="submit"
