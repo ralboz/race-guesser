@@ -24,6 +24,7 @@ export interface Group {
     ownerId: string;
     groupId: string;
     isOwner?: boolean;
+    memberCount?: number;
 }
 
 export interface PositionScore {

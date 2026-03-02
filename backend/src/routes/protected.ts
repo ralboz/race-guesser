@@ -63,9 +63,11 @@ router.get('/group', async (req: Request, res: Response) => {
     });
 
     if (ownedGroup) {
+      const memberCount = await GroupMember.count({ where: { group_id: ownedGroup.id } }) + 1;
       return res.json({ 
         group: ownedGroup,
-        isOwner: true 
+        isOwner: true,
+        memberCount
       });
     }
 
@@ -76,9 +78,11 @@ router.get('/group', async (req: Request, res: Response) => {
     });
 
     if (membershipRecord && membershipRecord.Group) {
+      const memberCount = await GroupMember.count({ where: { group_id: membershipRecord.Group.id } }) + 1;
       return res.json({ 
         group: membershipRecord.Group,
-        isOwner: false 
+        isOwner: false,
+        memberCount
       });
     }
 

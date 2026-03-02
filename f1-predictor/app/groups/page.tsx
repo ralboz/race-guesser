@@ -42,7 +42,8 @@ async function getUserGroup(): Promise<Group | null> {
             groupType: data.group.group_type,
             ownerId: data.group.owner_id,
             groupId: data.group.id.toString(),
-            isOwner: data.isOwner
+            isOwner: data.isOwner,
+            memberCount: data.memberCount
         };
     } catch (error) {
         console.error('Auth/token error:', error);
@@ -75,6 +76,8 @@ export default async function Groups() {
                     <div className="flex flex-row items-center gap-2.5 mb-2">
                         <p className="text-2xl opacity-80">#{userGroup.groupId}</p>
                         <CopyButton text={userGroup.groupId} />
+                        <span className="text-sm opacity-60">•</span>
+                        <p className="text-sm opacity-60">{userGroup.memberCount} {userGroup.memberCount === 1 ? 'member' : 'members'}</p>
                     </div>
                     <div className="mb-8">
                         {userGroup.isOwner ? (
