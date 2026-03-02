@@ -9,8 +9,16 @@ type PredictionWindowProps = {
 export default function PredictionWindowBanner({ windowStatus }: PredictionWindowProps) {
   if (!windowStatus) {
     return (
-      <div className="w-full rounded-lg p-3 bg-gray-700 text-gray-300 text-center text-sm">
-        Prediction window unavailable
+      <div
+        className="w-full text-center"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          color: 'var(--text-secondary)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.75rem 1rem',
+        }}
+      >
+        <span className="text-label">Prediction window unavailable</span>
       </div>
     );
   }
@@ -27,12 +35,22 @@ export default function PredictionWindowBanner({ windowStatus }: PredictionWindo
 
   if (windowStatus.status === 'open') {
     return (
-      <div className="w-full rounded-lg p-3 bg-green-800 text-green-100 text-center text-sm">
-        <p className="font-semibold">Predictions are open</p>
-        <p>
+      <div
+        className="w-full text-center"
+        style={{
+          backgroundColor: 'var(--color-success-bg)',
+          border: '1px solid var(--color-success)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.75rem 1rem',
+        }}
+      >
+        <p className="text-label" style={{ color: 'var(--color-success)', fontWeight: 600 }}>
+          Predictions are open
+        </p>
+        <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>
           {formatDate(windowStatus.openTime)} → {formatDate(windowStatus.closeTime)}
         </p>
-        <p className="text-xs mt-1 opacity-80">
+        <p className="text-caption" style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
           Deadline: {formatDate(windowStatus.closeTime)}
         </p>
       </div>
@@ -41,16 +59,37 @@ export default function PredictionWindowBanner({ windowStatus }: PredictionWindo
 
   if (windowStatus.status === 'closed') {
     return (
-      <div className="w-full rounded-lg p-3 bg-red-800 text-red-100 text-center text-sm">
-        <p className="font-semibold">Predictions are closed</p>
+      <div
+        className="w-full text-center"
+        style={{
+          backgroundColor: 'var(--color-error-bg)',
+          border: '1px solid var(--color-error)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.75rem 1rem',
+        }}
+      >
+        <p className="text-label" style={{ color: 'var(--color-error)', fontWeight: 600 }}>
+          Predictions are closed
+        </p>
       </div>
     );
   }
 
+  // not yet open
   return (
-    <div className="w-full rounded-lg p-3 bg-yellow-700 text-yellow-100 text-center text-sm">
-      <p className="font-semibold">Predictions are not yet open</p>
-      <p className="text-xs mt-1 opacity-80">
+    <div
+      className="w-full text-center"
+      style={{
+        backgroundColor: 'var(--color-warning-bg)',
+        border: '1px solid var(--color-warning)',
+        borderRadius: 'var(--radius-md)',
+        padding: '0.75rem 1rem',
+      }}
+    >
+      <p className="text-label" style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
+        Predictions are not yet open
+      </p>
+      <p className="text-caption" style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
         Opens: {formatDate(windowStatus.openTime)}
       </p>
     </div>

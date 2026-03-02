@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
 import { API_URL } from "@/libs/api";
 import { PositionScore } from "@/libs/types";
-import { getScoreColor } from "@/libs/utils";
+
 
 export interface PredictionFormData {
     pole: string;
@@ -18,9 +18,19 @@ const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'Po
 
 type Props = {
     raceId: string;
-    loadedFormData?: PredictionFormData | null; //if this is passed, form will be in prefilled disabled mode
-    scoreData?: PositionScore[] | null; //if this is passed, form will be in results mode with color-coded backgrounds
-    windowDisabled?: boolean; //if true, form inputs and submit are disabled due to prediction window
+    loadedFormData?: PredictionFormData | null;
+    scoreData?: PositionScore[] | null;
+    windowDisabled?: boolean;
+}
+
+/** Maps base_points to token-based score class */
+function getScoreClass(basePoints: number): string {
+    switch (basePoints) {
+        case 2: return 'score-exact';
+        case 1: return 'score-near';
+        case 0: return 'score-wrong';
+        default: return '';
+    }
 }
 
 export default function PredictionsForm({ raceId, loadedFormData, scoreData, windowDisabled }: Props) {
@@ -108,65 +118,97 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto p-6">
-            <div className="flex flex-row flex-wrap justify-evenly gap-7">
+        <form onSubmit={handleSubmit} className="max-w-2xl p-4 md:p-6">
+            <div className="flex flex-col gap-3 w-full">
                 {labels.map((label) => {
                     const name = label.toLowerCase().replace(' ', '') as keyof PredictionFormData;
                     const score = getScoreForPosition(name);
-                    const colorClass = score ? getScoreColor(score.base_points) : '';
+                    const scoreClass = score ? getScoreClass(score.base_points) : '';
 
                     return (
-                        <div key={label} className={`flex flex-col rounded p-2 ${colorClass}`}>
-                            <div className="flex justify-between">
-                                <label className="font-bold text-sm mb-1">{label}</label>
-                                {score?.unique_correct && <p className="text-sm">Points x2</p>}
-
+                        <div
+                            key={label}
+                            className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-[var(--radius-md)] transition-colors ${
+                                scoreClass || 'border border-[var(--bg-elevated)]'
+                            }`}
+                            style={{ backgroundColor: scoreClass ? undefined : 'var(--bg-surface)' }}
+                        >
+                            <div className="flex items-center justify-between sm:justify-start sm:min-w-[80px] gap-2">
+                                <span className="text-label font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                    {label}
+                                </span>
+                                {score?.unique_correct && (
+                                    <span
+                                        className="text-xs font-medium px-2 py-0.5 rounded-full"
+                                        style={{ backgroundColor: 'var(--color-unique-bg)', color: 'var(--color-unique)' }}
+                                    >
+                                        x2
+                                    </span>
+                                )}
                             </div>
-                            <select
-                                name={name as string}
-                                value={formData[name as keyof PredictionFormData]}
-                                onChange={handleChange}
-                                className={`p-2 border rounded text-white text-sm ${(loadedFormData || isResultsMode) && "opacity-80"}`}
-                                disabled={isDisabled}
-                            >
-                                <option value="">Select driver...</option>
-                                {getOptions(name).map(driver => (
-                                    <option key={driver.full_name} value={driver.full_name}>
-                                        #{driver.number} {driver.full_name}
-                                    </option>
-                                ))}
-                            </select>
+
+                            <div className="flex-1">
+                                <select
+                                    name={name as string}
+                                    value={formData[name as keyof PredictionFormData]}
+                                    onChange={handleChange}
+                                    className="w-full p-2 rounded-[var(--radius-sm)] text-sm focus-ring transition-colors"
+                                    style={{
+                                        backgroundColor: 'var(--bg-surface)',
+                                        color: 'var(--text-primary)',
+                                        border: '1px solid var(--bg-elevated)',
+                                        opacity: (loadedFormData || isResultsMode) ? 0.8 : 1,
+                                    }}
+                                    disabled={isDisabled}
+                                >
+                                    <option value="">Select driver...</option>
+                                    {getOptions(name).map(driver => (
+                                        <option key={driver.full_name} value={driver.full_name}>
+                                            #{driver.number} {driver.full_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* hidden for now as layout isnt how i want it when enabled, need to rethink 
                             {score && (
-                                <span className="text-xs mt-1 opacity-90">
+                                <span className="text-caption" style={{ color: 'var(--text-secondary)' }}>
                                     Actual: {score.actual_driver_name}
                                 </span>
-                            )}
+                            )} */}
                         </div>
                     );
                 })}
-                {!loadedFormData && !isResultsMode && !isSubmitted ?
-                    (
+
+                <div className="mt-4">
+                    {!loadedFormData && !isResultsMode && !isSubmitted ? (
                         <button
                             type="submit"
                             disabled={isLoading || !!windowDisabled}
-                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="btn btn-primary w-full"
                         >
                             {isLoading ? 'Submitting...' : 'Submit Predictions'}
                         </button>
-                    )
-                    :
-                    (
+                    ) : (
                         <Link
                             href={'/groups'}
-                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex justify-center"
+                            className="btn btn-primary w-full"
                         >
-                            {isLoading ? 'Submitting...' : 'Back to races'}
+                            Back to races
                         </Link>
-                    )
-                }
+                    )}
+                </div>
             </div>
+
             {message && (
-                <div className={`p-3 rounded ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <div
+                    className="mt-4 p-3 rounded-[var(--radius-md)] text-sm font-medium"
+                    style={{
+                        backgroundColor: message.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-error-bg)',
+                        color: message.type === 'success' ? 'var(--color-success)' : 'var(--color-error)',
+                        border: `1px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-error)'}`,
+                    }}
+                >
                     {message.text}
                 </div>
             )}

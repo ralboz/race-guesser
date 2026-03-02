@@ -23,7 +23,7 @@ export default async function LeaderBoardPage() {
   });
 
   if (!groupRes.ok) {
-    return <div className="max-w-2xl mx-auto p-4 text-center text-gray-400">Failed to load group data.</div>;
+    return <div className="max-w-2xl mx-auto p-4 text-center" style={{ color: 'var(--text-muted)' }}>Failed to load group data.</div>;
   }
 
   const groupData = await groupRes.json();
@@ -38,7 +38,7 @@ export default async function LeaderBoardPage() {
   });
 
   if (!leaderboardRes.ok) {
-    return <div className="max-w-2xl mx-auto p-4 text-center text-gray-400">Failed to load leaderboard data.</div>;
+    return <div className="max-w-2xl mx-auto p-4 text-center" style={{ color: 'var(--text-muted)' }}>Failed to load leaderboard data.</div>;
   }
 
   const { leaderboard, raceCount }: SeasonLeaderboardResponse = await leaderboardRes.json();

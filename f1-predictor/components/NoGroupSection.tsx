@@ -48,40 +48,82 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center mx-4">
-            <div className="flex flex-col gap-6 h-fit items-center bg-[#252525] rounded-lg overflow-hidden max-w-[500px] w-full">
-                <div className="flex flex-row justify-between items-center bg-[#202020] w-full px-2 py-1 h-16">
-                    <p className="text-2xl ml-2">Join Group</p>
-                    <IoMdClose className="cursor-pointer mr-3" onClick={onClose} />
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={onClose}
+        >
+            <div
+                className="flex flex-col w-full max-w-md mx-4 sm:mx-0 overflow-hidden shadow-2xl"
+                style={{ backgroundColor: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)' }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div
+                    className="flex items-center justify-between px-5 py-4"
+                    style={{ backgroundColor: 'var(--bg-surface)' }}
+                >
+                    <h2 className="text-h3">Join Group</h2>
+                    <button
+                        onClick={onClose}
+                        className="flex items-center justify-center w-[44px] h-[44px] rounded-md transition-colors focus-ring"
+                        style={{ color: 'var(--text-secondary)' }}
+                        aria-label="Close modal"
+                    >
+                        <IoMdClose size={22} />
+                    </button>
                 </div>
-                <div className="flex flex-col gap-3 items-start w-full px-4">
+
+                <div className="flex flex-col gap-4 p-5">
                     {error && (
-                        <div className="bg-red-600 text-white px-3 py-2 rounded-lg w-full text-center">
+                        <div
+                            className="px-4 py-3 text-sm font-medium"
+                            style={{
+                                backgroundColor: 'var(--color-error-bg)',
+                                color: 'var(--color-error)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-error)',
+                            }}
+                        >
                             {error}
                         </div>
                     )}
-                    <div className="flex flex-row gap-3">
-                        <p className="text-lg w-28">Group Code</p>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-label">Group Code</label>
                         <input
-                            placeholder="23123"
+                            placeholder="Enter group code"
                             value={groupId}
                             onChange={(e) => setGroupId(e.target.value)}
-                            className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
+                            className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
+                            style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                color: 'var(--text-primary)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--text-muted)',
+                            }}
                             disabled={loading}
                         />
                     </div>
-                    <div className="flex flex-row gap-3">
-                        <p className="text-lg w-28">Password</p>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-label">Password</label>
                         <input
                             type="password"
+                            placeholder="Enter group password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
+                            className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
+                            style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                color: 'var(--text-primary)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--text-muted)',
+                            }}
                             disabled={loading}
                         />
                     </div>
-                    <button 
-                        className="h-12 px-6 bg-[#2C40BD] rounded-lg text-lg w-fit mx-auto my-6 disabled:opacity-50 disabled:cursor-not-allowed" 
+
+                    <button
+                        className="btn btn-primary w-full mt-2"
                         onClick={handleSubmit}
                         disabled={loading}
                     >
@@ -139,70 +181,112 @@ const CreateGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSucce
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center mx-4">
-            <div className="flex flex-col gap-6 h-fit items-center bg-[#252525] rounded-lg overflow-hidden max-w-[500px] w-full">
-                <div className="flex flex-row justify-between items-center bg-[#202020] w-full px-2 py-1 h-16">
-                    <p className="text-2xl ml-2">Create Group</p>
-                    <IoMdClose className="cursor-pointer mr-3" onClick={onClose} />
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={onClose}
+        >
+            <div
+                className="flex flex-col w-full max-w-md mx-4 sm:mx-0 overflow-hidden shadow-2xl"
+                style={{ backgroundColor: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)' }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div
+                    className="flex items-center justify-between px-5 py-4"
+                    style={{ backgroundColor: 'var(--bg-surface)' }}
+                >
+                    <h2 className="text-h3">Create Group</h2>
+                    <button
+                        onClick={onClose}
+                        className="flex items-center justify-center w-[44px] h-[44px] rounded-md transition-colors focus-ring"
+                        style={{ color: 'var(--text-secondary)' }}
+                        aria-label="Close modal"
+                    >
+                        <IoMdClose size={22} />
+                    </button>
                 </div>
-                <div className="flex flex-col gap-3 items-start w-full px-4">
+
+                <div className="flex flex-col gap-4 p-5">
                     {error && (
-                        <div className="bg-red-600 text-white px-3 py-2 rounded-lg w-full text-center">
+                        <div
+                            className="px-4 py-3 text-sm font-medium"
+                            style={{
+                                backgroundColor: 'var(--color-error-bg)',
+                                color: 'var(--color-error)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--color-error)',
+                            }}
+                        >
                             {error}
                         </div>
                     )}
-                    <div className="flex flex-row gap-3">
-                        <p className="text-lg w-28">Group Name</p>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-label">Group Name</label>
                         <input
                             placeholder="The F1 Predictors"
                             value={groupName}
                             onChange={(e) => setGroupName(e.target.value)}
-                            className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
+                            className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
+                            style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                color: 'var(--text-primary)',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--text-muted)',
+                            }}
                             disabled={loading}
                         />
                     </div>
-                    <div className="flex flex-row gap-3">
-                        <p className="text-lg w-28">Group Type</p>
-                        <div className="flex flex-row gap-4">
-                            <label className="flex items-center">
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-label">Group Type</label>
+                        <div className="flex gap-5 mt-1">
+                            <label className="flex items-center gap-2 cursor-pointer" style={{ color: 'var(--text-primary)' }}>
                                 <input
                                     type="radio"
                                     value="private"
                                     checked={groupType === 'private'}
                                     onChange={() => setGroupType('private')}
-                                    className="mr-2"
+                                    className="w-4 h-4 accent-[var(--color-accent)] focus-ring"
                                     disabled={loading}
                                 />
-                                Private
+                                <span className="text-sm">Private</span>
                             </label>
-                            <label className="flex items-center">
+                            <label className="flex items-center gap-2 cursor-pointer" style={{ color: 'var(--text-primary)' }}>
                                 <input
                                     type="radio"
                                     value="public"
                                     checked={groupType === 'public'}
                                     onChange={() => setGroupType('public')}
-                                    className="mr-2"
+                                    className="w-4 h-4 accent-[var(--color-accent)] focus-ring"
                                     disabled={loading}
                                 />
-                                Public
+                                <span className="text-sm">Public</span>
                             </label>
                         </div>
                     </div>
+
                     {groupType === 'private' && (
-                        <div className="flex flex-row gap-3">
-                            <p className="text-lg w-28">Password</p>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-label">Password</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="bg-[#4A4A4A] px-2 py-1 rounded-lg"
+                                className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
+                                style={{
+                                    backgroundColor: 'var(--bg-surface)',
+                                    color: 'var(--text-primary)',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--text-muted)',
+                                }}
                                 disabled={loading}
                                 placeholder="Enter password for private group"
                             />
                         </div>
                     )}
-                    <button 
-                        className="h-12 px-6 bg-[#2C40BD] rounded-lg text-lg w-fit mx-auto my-6 disabled:opacity-50 disabled:cursor-not-allowed" 
+
+                    <button
+                        className="btn btn-primary w-full mt-2"
                         onClick={handleSubmit}
                         disabled={loading}
                     >
@@ -224,11 +308,14 @@ export const NoGroupSection = () => {
     };
 
     return (
-
         <>
-            <div className="flex flex-row gap-8 mt-10">
-                <button className="w-64 h-14 text-xl rounded-lg bg-[#2C40BD]" onClick={() => setJoinOpen(true)}>Join Group</button>
-                <button className="w-64 h-14 text-xl rounded-lg bg-[#2C40BD]" onClick={() => setCreateOpen(true)}>Create Group</button>
+            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+                <button className="btn btn-primary text-lg px-8 py-3" onClick={() => setJoinOpen(true)}>
+                    Join Group
+                </button>
+                <button className="btn btn-secondary text-lg px-8 py-3" onClick={() => setCreateOpen(true)}>
+                    Create Group
+                </button>
             </div>
             {joinOpen && createPortal(
                 <JoinGroupModal onClose={() => setJoinOpen(false)} onSuccess={handleSuccess} />,
@@ -239,5 +326,5 @@ export const NoGroupSection = () => {
                 document.body
             )}
         </>
-    )
-}
+    );
+};

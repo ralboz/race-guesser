@@ -53,7 +53,7 @@ export default function RaceContentTabs({
 
     return (
         <div className="w-full">
-            <div role="tablist" className="flex border-b border-gray-700">
+            <div role="tablist" className="flex border-b border-[var(--bg-surface)]">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -64,10 +64,10 @@ export default function RaceContentTabs({
                         tabIndex={activeTab === tab.id ? 0 : -1}
                         onClick={() => setActiveTab(tab.id)}
                         onKeyDown={(e) => handleKeyDown(e, tab.id)}
-                        className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                        className={`flex-1 px-4 py-2 text-sm font-medium transition-colors focus-ring ${
                             activeTab === tab.id
-                                ? 'bg-[#1A1A1A] text-white border-b-2 border-white'
-                                : 'text-gray-400 hover:text-gray-200 hover:bg-[#1A1A1A]/50'
+                                ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-b-2 border-[var(--color-accent)]'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]/50'
                         }`}
                     >
                         {tab.label}
@@ -89,13 +89,13 @@ export default function RaceContentTabs({
                             <PredictionsForm raceId={raceId} windowDisabled={windowDisabled} />
                         )}
                         {predictionStatus.submitted && !hasResults && (
-                            <div className="pt-2">
+                            <div className="pt-4">
                                 <h2>You have already submitted for this race!</h2>
                                 <PredictionsForm raceId={raceId} loadedFormData={predictionStatus.predictions} />
                             </div>
                         )}
                         {predictionStatus.submitted && hasResults && (
-                            <div className="flex flex-col items-center pt-4">
+                            <div className="flex flex-col pt-4 items-stretch">
                                 {scoresResponse!.summary && (
                                     <ScoreSummary
                                         total_points={scoresResponse!.summary.total_points}

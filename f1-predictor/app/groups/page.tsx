@@ -78,22 +78,24 @@ export default async function Groups() {
                     </div>
                     <div className="mb-8">
                         {userGroup.isOwner ? (
-                            <p className="text-green-500">You are the owner of this group</p>
+                            <p style={{ color: 'var(--color-success)' }}>You are the owner of this group</p>
                         ) : (
-                            <p className="text-blue-500">You are a member of this group</p>
+                            <p style={{ color: 'var(--color-info)' }}>You are a member of this group</p>
                         )}
                     </div>
-                    <h2 className="text-xl mb-5">Upcoming Races</h2>
-                    <div className="flex flex-row flex-wrap items-center justify-center gap-7">
+                    <h2 className="text-h2 mb-6">Upcoming Races</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 justify-items-center">
                         {upcomingRaces.map((race) => (
                             <RaceCard key={race.meeting_key} race={race} />
                         ))}
                     </div>
                     {pastRaces.length > 0 && (
                         <>
-                            <div className="w-full h-1 mt-10 bg-white rounded-lg"/>
-                            <h2 className="text-xl mt-5 mb-5">Past Races</h2>
-                            <div className="flex flex-row flex-wrap items-center justify-center gap-7">
+                            <div className="w-full mt-12 mb-8 flex items-center gap-4">
+                                <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, var(--bg-elevated), var(--text-muted), var(--bg-elevated), transparent)' }} />
+                            </div>
+                            <h2 className="text-h2 mb-6">Past Races</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 justify-items-center">
                                 {pastRaces.map((race) => (
                                     <RaceCard key={race.meeting_key} race={race} />
                                 ))}

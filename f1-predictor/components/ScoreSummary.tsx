@@ -1,3 +1,5 @@
+import { FiCheckCircle, FiTrendingUp, FiZap } from "react-icons/fi";
+
 type ScoreSummaryProps = {
   total_points: number;
   exact_hits: number;
@@ -12,25 +14,85 @@ export default function ScoreSummary({
   unique_correct_hits,
 }: ScoreSummaryProps) {
   return (
-    <div className="flex flex-row flex-wrap items-center justify-center gap-4 px-4 py-3 bg-[#1A1A1A] rounded-lg w-[50%]">
-      <div className="flex flex-col items-center">
-        <span className="text-2xl font-bold">{total_points}</span>
-        <span className="text-xs text-gray-400">Points</span>
+    <div
+      className="w-fit rounded-lg p-3 self-center"
+      style={{
+        background: "var(--bg-secondary)",
+        borderRadius: "var(--radius-lg)",
+      }}
+    >
+      <div className="flex flex-col items-center mb-4">
+        <span
+          className="text-3xl font-bold"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {total_points}
+        </span>
+        <span className="text-caption" style={{ color: "var(--text-muted)" }}>
+          Total Points
+        </span>
       </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-semibold text-green-400">{exact_hits}</span>
-        <span className="text-xs text-gray-400">Exact</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-semibold text-orange-400">{near_hits}</span>
-        <span className="text-xs text-gray-400">Near</span>
-      </div>
-      {unique_correct_hits > 0 && (
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-semibold text-yellow-400">{unique_correct_hits}</span>
-          <span className="text-xs text-gray-400">Unique</span>
+
+      {/* Breakdown metrics */}
+      <div className="flex flex-row flex-wrap items-center justify-center gap-4">
+        {/* Exact hits */}
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-md"
+          style={{ background: "var(--color-exact-bg)" }}
+        >
+          <FiCheckCircle size={16} style={{ color: "var(--color-exact)" }} />
+          <span
+            className="text-body font-semibold"
+            style={{ color: "var(--color-exact)" }}
+          >
+            {exact_hits}
+          </span>
+          <span
+            className="text-caption"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Exact
+          </span>
         </div>
-      )}
+
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-md"
+          style={{ background: "var(--color-near-bg)" }}
+        >
+          <FiTrendingUp size={16} style={{ color: "var(--color-near)" }} />
+          <span
+            className="text-body font-semibold"
+            style={{ color: "var(--color-near)" }}
+          >
+            {near_hits}
+          </span>
+          <span
+            className="text-caption"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Near
+          </span>
+        </div>
+
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-md"
+          style={{ background: "var(--color-unique-bg)" }}
+        >
+          <FiZap size={16} style={{ color: "var(--color-unique)" }} />
+          <span
+            className="text-body font-semibold"
+            style={{ color: "var(--color-unique)" }}
+          >
+            {unique_correct_hits}
+          </span>
+          <span
+            className="text-caption"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Unique
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

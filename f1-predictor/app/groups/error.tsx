@@ -1,5 +1,7 @@
 'use client';
 
+import { FiAlertTriangle } from 'react-icons/fi';
+
 export default function GroupsError({
   error,
   reset,
@@ -8,15 +10,25 @@ export default function GroupsError({
   reset: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-white gap-4">
-      <h2 className="text-2xl font-semibold">Failed to load groups</h2>
-      <p className="text-gray-400">{error.message || 'Groups could not be loaded.'}</p>
-      <button
-        onClick={reset}
-        className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition"
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div
+        className="flex flex-col items-center gap-4 p-8 text-center"
+        style={{
+          backgroundColor: 'var(--color-error-bg)',
+          borderRadius: 'var(--radius-lg)',
+          maxWidth: '28rem',
+          width: '100%',
+        }}
       >
-        Try again
-      </button>
+        <FiAlertTriangle size={40} style={{ color: 'var(--color-error)' }} />
+        <h2 className="text-h2">Failed to load groups</h2>
+        <p className="text-body" style={{ color: 'var(--text-secondary)' }}>
+          {error.message || 'Groups could not be loaded.'}
+        </p>
+        <button onClick={reset} className="btn btn-primary">
+          Try again
+        </button>
+      </div>
     </div>
   );
 }
