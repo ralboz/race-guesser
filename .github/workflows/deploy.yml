@@ -1,0 +1,38 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+
+            # Navigate to your project directory — adjust this path
+            cd /home/grid-guesser
+
+            # Pull latest changes
+            git pull origin master
+
+            # Backend: install, build, migrate, restart
+            cd backend
+            npm ci --production=false
+            npm run build
+            npm run migrate
+            pm2 restart backend || pm2 start dist/app.js --name backend
+            cd ..
+
+            # Frontend: install, build, restart
+            cd f1-predictor
+            npm ci --production=false
+            npm run build
+            pm2 restart next-frontend || pm2 start npm --name next-frontend -- start
