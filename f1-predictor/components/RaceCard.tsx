@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LocalDate } from "./LocalDate";
 
 interface RaceCardProps {
     meeting_key: number
@@ -15,17 +16,6 @@ interface RaceCardProps {
 }
 
 export function RaceCard({race}: {race: RaceCardProps}) {
-    const formatter = new Intl.DateTimeFormat('en-GB', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
-
-    const dateStartFormatted = formatter.format(new Date(race.date_start));
 
     return (
         <div
@@ -53,7 +43,7 @@ export function RaceCard({race}: {race: RaceCardProps}) {
                 className="object-cover"
             />
             <div className="flex flex-col items-center gap-3">
-                <p className="text-label">{dateStartFormatted}</p>
+                <LocalDate iso={race.date_start} className="text-label" />
                 <Link
                     href={`/race/${race.meeting_key}`}
                     className="btn btn-primary focus-ring"

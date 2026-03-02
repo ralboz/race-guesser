@@ -118,7 +118,7 @@ export default function RaceContentTabs({
                         {leaderboard.length > 0 ? (
                             <MiniLeaderboard leaderboard={leaderboard} currentUserId={currentUserId} />
                         ) : (
-                            <p>No leaderboard data available for this race.</p>
+                            <p className='mt-3'>No leaderboard data available for this race.</p>
                         )}
                     </div>
                 )}

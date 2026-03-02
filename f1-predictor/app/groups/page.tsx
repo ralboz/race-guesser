@@ -1,6 +1,6 @@
 import {Group, OpenF1Meeting} from "@/libs/types";
 import {RaceCard} from "@/components/RaceCard";
-import { FaCopy } from "react-icons/fa";
+import { CopyButton } from "@/components/CopyButton";
 import {NoGroupSection} from "@/components/NoGroupSection";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
@@ -74,7 +74,7 @@ export default async function Groups() {
                     <h1 className="text-3xl">{userGroup.groupName}</h1>
                     <div className="flex flex-row items-center gap-2.5 mb-2">
                         <p className="text-2xl opacity-80">#{userGroup.groupId}</p>
-                        <FaCopy />
+                        <CopyButton text={userGroup.groupId} />
                     </div>
                     <div className="mb-8">
                         {userGroup.isOwner ? (
