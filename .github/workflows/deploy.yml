@@ -17,7 +17,11 @@ jobs:
           script: |
             set -e
 
-            # Navigate to your project directory — adjust this path
+            # Load nvm so node/npm/pm2 are available in non-interactive SSH
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            # Navigate to your project directory
             cd /home/grid-guesser
 
             # Pull latest changes
