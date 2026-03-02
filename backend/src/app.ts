@@ -13,6 +13,9 @@ import { initializeDatabase } from './models';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust the first proxy (nginx) so express-rate-limit reads the real client IP
+app.set('trust proxy', 1);
+
 initializeDatabase();
 
 const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';

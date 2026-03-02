@@ -61,7 +61,7 @@ module.exports = {
         allowNull: false,
       },
       group_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.BIGINT,
         allowNull: false,
         references: { model: 'Groups', key: 'id' },
         onUpdate: 'CASCADE',
@@ -91,7 +91,7 @@ module.exports = {
         allowNull: false,
       },
       group_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.BIGINT,
         allowNull: false,
         references: { model: 'Groups', key: 'id' },
         onUpdate: 'CASCADE',
