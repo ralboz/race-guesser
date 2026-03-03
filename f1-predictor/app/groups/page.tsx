@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import {NoGroupSection} from "@/components/NoGroupSection";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
+import Link from "next/link";
 import { API_URL } from "@/libs/api";
 
 async function getUserGroup(): Promise<Group | null> {
@@ -79,13 +80,18 @@ export default async function Groups() {
                         <span className="text-sm opacity-60">•</span>
                         <p className="text-sm opacity-60">{userGroup.memberCount} {userGroup.memberCount === 1 ? 'member' : 'members'}</p>
                     </div>
-                    <div className="mb-8">
-                        {userGroup.isOwner ? (
-                            <p style={{ color: 'var(--color-success)' }}>You are the owner of this group</p>
-                        ) : (
-                            <p style={{ color: 'var(--color-info)' }}>You are a member of this group</p>
-                        )}
-                    </div>
+                    {userGroup.isOwner && (
+                        <div className="mb-8">
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/groups/manage"
+                                    className="btn btn-secondary text-sm"
+                                >
+                                    Manage Group
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                     <h2 className="text-h2 mb-6">Upcoming Races</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 justify-items-center">
                         {upcomingRaces.map((race) => (

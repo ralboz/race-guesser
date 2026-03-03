@@ -1,240 +1,111 @@
 import express, { Request, Response } from 'express';
-import { Op, fn, col, Transaction } from 'sequelize';
-import sequelize from '../config/database';
+import rateLimit from 'express-rate-limit';
+import { requireAuth } from '../middleware/auth';
+import { syncUserProfile } from '../middleware/syncUserProfile';
+import { requireGroupOwner } from '../middleware/requireGroupOwner';
+import { GroupMember, UserProfile, Group } from '../models';
+import { hashPassword } from '../utils/password';
 
-import UserPrediction from '../models/UserPrediction';
-import RaceResult from '../models/RaceResult';
-import PredictionScore from '../models/PredictionScore';
-import UserRaceScore from '../models/UserRaceScore';
-import { requireAuth, getAuth } from '../middleware/auth';
-
-import { fetchQualifyingPoleDriver } from '../scoring/fetchQualifyingPoleDriver';
-import { fetchRacePositions } from '../scoring/fetchRacePositions';
-import { scorePrediction, PositionType } from '../scoring/scorePrediction';
-import { aggregateScores } from '../scoring/aggregateScores';
-
-const RACE_POSITION_TYPES: PositionType[] = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10'];
-
-function posTypeToNumber(pt: PositionType): number | null {
-    if (pt === 'pole') return null;
-    return Number(pt.slice(1));
-}
-
-function numberToPosType(n: number): PositionType {
-    return `p${n}` as PositionType;
-}
 const router = express.Router();
 
+const adminMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' }
+});
+
+// All admin routes require auth + group ownership
 router.use(requireAuth());
+router.use(syncUserProfile);
+router.use(requireGroupOwner);
 
-router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
-    const { userId } = getAuth(req);
-    if (!userId || userId !== process.env.ADMIN_ID) return res.sendStatus(403);
+// list all members of the owner's group
+router.get('/members', async (req: Request, res: Response) => {
+  try {
+    const group = (req as any).group as Group;
 
-    const raceId = req.params.raceId;
-    if (!raceId) return res.status(400).json({ error: "Missing raceId (session_key)" });
+    const members = await GroupMember.findAll({
+      where: { group_id: group.id },
+      order: [['created_at', 'ASC']]
+    });
 
-    let t: Transaction | null = null;
+    const userIds = members.map(m => m.user_id);
 
-    try {
-        // Fetch race positions and qualifying pole driver in parallel — both are required
-        const [raceResult, poleDriverName] = await Promise.all([
-            fetchRacePositions(raceId),
-            fetchQualifyingPoleDriver(raceId)
-        ]);
+    // Also include the owner
+    const allUserIds = [group.owner_id, ...userIds];
+    const profiles = await UserProfile.findAll({ where: { user_id: allUserIds } });
+    const profileMap = new Map(profiles.map(p => [p.user_id, p.display_name]));
 
-        if (!raceResult.ok) {
-            return res.status(raceResult.error.status).json(raceResult.error);
-        }
+    const memberList = members.map(m => ({
+      user_id: m.user_id,
+      display_name: profileMap.get(m.user_id) ?? m.user_id,
+      joined_at: m.created_at
+    }));
 
-        if (!poleDriverName) {
-            return res.status(500).json({ error: "Qualifying data unavailable — cannot complete scoring without pole position" });
-        }
+    res.json({
+      owner: {
+        user_id: group.owner_id,
+        display_name: profileMap.get(group.owner_id) ?? group.owner_id
+      },
+      members: memberList
+    });
+  } catch (error) {
+    console.error('Error listing members:', error);
+    res.status(500).json({ message: 'Error listing members' });
+  }
+});
 
-        const { actualByPosition } = raceResult.data;
-        const activePositionTypes: PositionType[] = ['pole', ...RACE_POSITION_TYPES];
 
-        t = await sequelize.transaction();
+// remove a member from the group
+router.delete('/members/:userId', adminMutationLimiter, async (req: Request, res: Response) => {
+  try {
+    const group = (req as any).group as Group;
+    const targetUserId = req.params.userId;
 
-        // Upsert RaceResults for pole + p1..p10
-        const raceResultsRows: { race_identifier: string; position_type: PositionType; driver_name: string }[] = [
-            { race_identifier: raceId, position_type: 'pole', driver_name: poleDriverName }
-        ];
-
-        for (let p = 1; p <= 10; p++) {
-            raceResultsRows.push({
-                race_identifier: raceId,
-                position_type: numberToPosType(p),
-                driver_name: actualByPosition.get(p)!
-            });
-        }
-
-        await RaceResult.bulkCreate(raceResultsRows, {
-            updateOnDuplicate: ['driver_name', 'updated_at'],
-            transaction: t
-        });
-
-        // 3) Load all predictions for that race
-        const predictions = await UserPrediction.findAll({
-            where: {
-                race_identifier: raceId,
-                position_type: { [Op.in]: activePositionTypes }
-            },
-            transaction: t
-        });
-
-        // 4) Compute uniqueness counts for "unique exact" bonus
-        // Build the list of actual drivers for each active slot
-        const actualDriversForSlots: string[] = [poleDriverName];
-        for (const pt of RACE_POSITION_TYPES) {
-            const slot = posTypeToNumber(pt);
-            if (slot) actualDriversForSlots.push(actualByPosition.get(slot)!);
-        }
-
-        const uniqueCountRows = await UserPrediction.findAll({
-            attributes: [
-                'group_id',
-                'position_type',
-                'driver_name',
-                [fn('COUNT', col('*')), 'cnt']
-            ],
-            where: {
-                race_identifier: raceId,
-                position_type: { [Op.in]: activePositionTypes },
-                driver_name: { [Op.in]: Array.from(new Set(actualDriversForSlots)) }
-            },
-            group: ['group_id', 'position_type', 'driver_name'],
-            raw: true,
-            transaction: t
-        });
-
-        const uniqueCountMap = new Map<string, number>();
-        for (const row of uniqueCountRows as any[]) {
-            uniqueCountMap.set(`${row.group_id}|${row.position_type}|${row.driver_name}`, Number(row.cnt));
-        }
-
-        // Build actualPosByDriver from positions 1..11 (for +/-1 scoring on p1-p10)
-        const actualPosByDriver = new Map<string, number>();
-        for (let p = 1; p <= 11; p++) {
-            actualPosByDriver.set(actualByPosition.get(p)!, p);
-        }
-
-        // 5) Create per-prediction score rows using scorePrediction
-        const scoreRows: any[] = [];
-        for (const pred of predictions) {
-            const posType = pred.position_type as PositionType;
-            const predictedName = pred.driver_name;
-
-            // Determine the actual driver name for this slot
-            let actualNameAtSlot: string;
-            if (posType === 'pole') {
-                actualNameAtSlot = poleDriverName;
-            } else {
-                const slot = posTypeToNumber(posType);
-                if (!slot) continue;
-                actualNameAtSlot = actualByPosition.get(slot)!;
-            }
-
-            const basePoints = scorePrediction(
-                predictedName,
-                actualNameAtSlot,
-                posType,
-                actualPosByDriver
-            );
-
-            const uniqueCorrect =
-                basePoints > 0 && (uniqueCountMap.get(`${pred.group_id}|${pred.position_type}|${predictedName}`) === 1);
-
-            const finalPoints = uniqueCorrect ? basePoints * 2 : basePoints;
-
-            scoreRows.push({
-                prediction_id: pred.id,
-                user_id: pred.user_id,
-                group_id: pred.group_id,
-                race_identifier: pred.race_identifier,
-                position_type: pred.position_type,
-                predicted_driver_name: predictedName,
-                actual_driver_name: actualNameAtSlot,
-                base_points: basePoints,
-                unique_correct: uniqueCorrect ? 1 : 0,
-                final_points: finalPoints,
-                computed_at: new Date()
-            });
-        }
-
-        await PredictionScore.bulkCreate(scoreRows, {
-            updateOnDuplicate: [
-                'prediction_id',
-                'predicted_driver_name',
-                'actual_driver_name',
-                'base_points',
-                'unique_correct',
-                'final_points',
-                'computed_at'
-            ],
-            transaction: t
-        });
-
-        // 6) Aggregate into UserRaceScores using aggregateScores
-        const groupedRows = new Map<string, {
-            user_id: string;
-            group_id: number;
-            race_identifier: string;
-            rows: typeof scoreRows;
-        }>();
-
-        for (const r of scoreRows) {
-            const key = `${r.group_id}|${r.user_id}|${r.race_identifier}`;
-            const entry = groupedRows.get(key);
-            if (entry) {
-                entry.rows.push(r);
-            } else {
-                groupedRows.set(key, {
-                    user_id: r.user_id,
-                    group_id: r.group_id,
-                    race_identifier: r.race_identifier,
-                    rows: [r]
-                });
-            }
-        }
-
-        const userRaceScoreRows = Array.from(groupedRows.values()).map(g => {
-            const agg = aggregateScores(g.rows);
-            return {
-                user_id: g.user_id,
-                group_id: g.group_id,
-                race_identifier: g.race_identifier,
-                total_points: agg.total_points,
-                exact_hits: agg.exact_hits,
-                near_hits: agg.near_hits,
-                unique_correct_hits: agg.unique_correct_hits,
-                computed_at: new Date()
-            };
-        });
-
-        await UserRaceScore.bulkCreate(userRaceScoreRows, {
-            updateOnDuplicate: [
-                'total_points',
-                'exact_hits',
-                'near_hits',
-                'unique_correct_hits',
-                'computed_at'
-            ],
-            transaction: t
-        });
-
-        await t.commit();
-
-        return res.json({
-            ok: true,
-            race_identifier: raceId,
-            predictions_scored: scoreRows.length,
-            user_race_scores_updated: groupedRows.size
-        });
-    } catch (err: any) {
-        if (t) await t.rollback();
-        return res.status(500).json({ error: err?.message ?? 'Unknown error' });
+    if (targetUserId === group.owner_id) {
+      return res.status(400).json({ message: 'Cannot remove the group owner' });
     }
+
+    const deleted = await GroupMember.destroy({
+      where: { user_id: targetUserId, group_id: group.id }
+    });
+
+    if (deleted === 0) {
+      return res.status(404).json({ message: 'Member not found in this group' });
+    }
+
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    console.error('Error removing member:', error);
+    res.status(500).json({ message: 'Error removing member' });
+  }
+});
+
+// change the group password
+router.patch('/password', adminMutationLimiter, async (req: Request, res: Response) => {
+  try {
+    console.log("hit")
+    const group = (req as any).group as Group;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.trim().length === 0) {
+      return res.status(400).json({ message: 'New password is required' });
+    }
+
+    if (newPassword.length < 3) {
+      return res.status(400).json({ message: 'Password must be at least 3 characters' });
+    }
+
+    const hashed = await hashPassword(newPassword);
+    await group.update({ password: hashed });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Error updating password' });
+  }
 });
 
 export default router;

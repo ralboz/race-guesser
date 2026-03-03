@@ -8,6 +8,7 @@ import { clerkMiddleware } from './middleware/auth';
 import publicRoutes from './routes/public';
 import protectedRoutes from './routes/protected';
 import adminRoutes from './routes/admin';
+import superadminRoutes from './routes/superadmin';
 import { initializeDatabase } from './models';
 
 const app = express();
@@ -22,7 +23,7 @@ const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
 app.use(cors({
   origin: allowedOrigin,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 600
 }));
@@ -46,6 +47,7 @@ app.use(clerkMiddleware());
 app.use('/public', publicRoutes);
 app.use('/protected', protectedRoutes);
 app.use('/admin', adminRoutes)
+app.use('/superadmin', superadminRoutes)
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);

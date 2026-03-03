@@ -27,6 +27,17 @@ export interface Group {
     memberCount?: number;
 }
 
+export interface GroupMember {
+    user_id: string;
+    display_name: string;
+    joined_at: string;
+}
+
+export interface GroupOwner {
+    user_id: string;
+    display_name: string;
+}
+
 export interface PositionScore {
     position_type: string;
     predicted_driver_name: string;
