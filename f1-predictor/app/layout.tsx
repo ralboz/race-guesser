@@ -11,19 +11,47 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gridguesser.com"),
   title: {
-    default: "F1 Predictor — Predict Formula 1 Race Results",
-    template: "%s | F1 Predictor",
+    default: "Grid Guesser — F1 Prediction Game | Predict Formula 1 Race Results",
+    template: "%s | Grid Guesser",
   },
   description:
-    "Compete with friends by predicting Formula 1 race results. Make your picks, earn points, and climb the leaderboard.",
-  keywords: ["Formula 1", "F1", "predictions", "racing", "leaderboard"],
+    "Play Grid Guesser, the free F1 prediction game. Predict the top 10 finishing positions for every Formula 1 race, compete in private leagues with friends, and climb the season leaderboard.",
+  keywords: [
+    "F1 prediction game",
+    "Formula 1 predictions",
+    "F1 fantasy",
+    "predict F1 results",
+    "F1 league",
+    "racing prediction game",
+    "Formula 1 game",
+    "F1 tips",
+    "Grand Prix predictions",
+    "motorsport prediction",
+    "Grid Guesser",
+  ],
   openGraph: {
-    title: "F1 Predictor",
+    title: "Grid Guesser — F1 Prediction Game",
     description:
-      "Compete with friends by predicting Formula 1 race results.",
+      "Predict the top 10 for every Formula 1 race, compete in leagues with friends, and prove you know F1 better than anyone.",
+    url: "https://gridguesser.com",
+    siteName: "Grid Guesser",
     type: "website",
     locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Grid Guesser — F1 Prediction Game",
+    description:
+      "Predict F1 race results, compete with friends, and climb the leaderboard. Free to play.",
+  },
+  alternates: {
+    canonical: "https://gridguesser.com",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -1,19 +1,50 @@
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { FiUsers, FiTarget, FiAward, FiCheckCircle, FiTrendingUp, FiZap } from "react-icons/fi";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Grid Guesser — Free F1 Prediction Game | Predict Formula 1 Race Results",
+    description:
+        "Play Grid Guesser, the free Formula 1 prediction game. Predict the top 10 finishing positions, create private leagues with friends, earn points, and compete across the full F1 season.",
+    alternates: {
+        canonical: "https://gridguesser.com",
+    },
+};
+
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Grid Guesser",
+    url: "https://gridguesser.com",
+    description:
+        "Free Formula 1 prediction game. Predict race results, compete in leagues with friends, and climb the season leaderboard.",
+    applicationCategory: "GameApplication",
+    operatingSystem: "Any",
+    offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+    },
+    genre: ["Sports", "Prediction Game", "Formula 1"],
+};
 
 export default async function Home() {
     const user = await currentUser();
 
     return (
         <div>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
                 <section className="text-center py-12 md:py-20" id='hero-section'>
                     <h1 className="text-h1 mb-4">
-                        Welcome to Grid Guesser
+                        The Free F1 Prediction Game
                     </h1>
                     <p className="text-body max-w-2xl mx-auto mb-8" style={{ color: 'var(--text-secondary)' }}>
-                        Predict the F1 grid, compete with friends, and prove you know the sport better than anyone.
+                        Predict the top 10 for every Formula 1 race, create a league with friends, and compete across the full season. Free to play — no fantasy budget, just pure racing knowledge.
                     </p>
 
                     {user ? (
