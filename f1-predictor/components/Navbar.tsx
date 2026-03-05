@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
 import { HiMenu, HiX } from 'react-icons/hi';
@@ -35,6 +36,15 @@ export default function Navbar() {
             {/* nav bar */}
             <div className="flex h-16 items-center justify-between px-4 md:px-6">
                 <div className="flex items-center gap-1">
+                    <Link href="/" aria-label="Home" className="md:hidden">
+                        <Image
+                            src="/favicon.ico"
+                            alt="Grid Guesser logo"
+                            width={64}
+                            height={64}
+                            className="shrink-0"
+                        />
+                    </Link>
                     {/* Desktop*/}
                     <div className="hidden md:flex items-center">
                         {links.map((link) => (

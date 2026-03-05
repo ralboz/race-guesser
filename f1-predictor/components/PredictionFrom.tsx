@@ -41,6 +41,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [sortByNumber, setSortByNumber] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -107,7 +108,9 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
             );
 
             return !isSelectedInGridPositions;
-        }).sort((a, b) => a.number - b.number);
+        }).sort((a, b) =>
+            sortByNumber ? a.number - b.number : a.full_name.localeCompare(b.full_name)
+        );
 
     const isResultsMode = !!scoreData && scoreData.length > 0;
     const isDisabled = isLoading || !!loadedFormData || isResultsMode || !!windowDisabled || isSubmitted;
@@ -120,6 +123,35 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
     return (
         <form onSubmit={handleSubmit} className="max-w-2xl p-4 md:p-6">
             <div className="flex flex-col gap-3 w-full">
+                {!isDisabled && (
+                <div className="flex items-center justify-end gap-2 mb-1">
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sort driver options by</span>
+                    <button
+                        type="button"
+                        onClick={() => setSortByNumber(false)}
+                        className="text-xs px-2 py-1 rounded-[var(--radius-sm)] transition-colors"
+                        style={{
+                            backgroundColor: !sortByNumber ? 'var(--bg-elevated)' : 'transparent',
+                            color: !sortByNumber ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            border: '1px solid var(--bg-elevated)',
+                        }}
+                    >
+                        Name
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSortByNumber(true)}
+                        className="text-xs px-2 py-1 rounded-[var(--radius-sm)] transition-colors"
+                        style={{
+                            backgroundColor: sortByNumber ? 'var(--bg-elevated)' : 'transparent',
+                            color: sortByNumber ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            border: '1px solid var(--bg-elevated)',
+                        }}
+                    >
+                        #Number
+                    </button>
+                </div>
+                )}
                 {labels.map((label) => {
                     const name = label.toLowerCase().replace(' ', '') as keyof PredictionFormData;
                     const score = getScoreForPosition(name);
