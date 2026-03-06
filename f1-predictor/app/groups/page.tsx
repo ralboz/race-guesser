@@ -65,8 +65,13 @@ async function getGrandPrixRaces(): Promise<Race[]> {
 export default async function Groups() {
     const [userGroup, races] = await Promise.all([getUserGroup(), getGrandPrixRaces()]);
     const now = new Date();
-    const pastRaces = races.filter(race => new Date(race.date_start) < now);
-    const upcomingRaces = races.filter(race => new Date(race.date_start) >= now);
+    const isRaceWeekendOver = (race: Race) => {
+        const end = new Date(race.date_end);
+        end.setUTCHours(23, 59, 59, 999);
+        return end < now;
+    };
+    const pastRaces = races.filter(race => isRaceWeekendOver(race));
+    const upcomingRaces = races.filter(race => !isRaceWeekendOver(race));
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-4">
