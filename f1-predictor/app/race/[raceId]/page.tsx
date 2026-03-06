@@ -1,9 +1,11 @@
 import RaceContentTabs, {PredictionCheckResponse} from "@/components/RaceContentTabs";
-import {OpenF1Meeting, ScoresResponse, LeaderboardEntry} from "@/libs/types";
+import {Race, ScoresResponse, LeaderboardEntry} from "@/libs/types";
 import Image from "next/image";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
 import { API_URL } from "@/libs/api";
+import { CircuitMap } from "@/components/CircuitMap";
+import { getFlagUrl } from "@/libs/flags";
 
 export type PredictionWindowStatus = {
     status: 'not_yet_open' | 'open' | 'closed';
@@ -15,16 +17,12 @@ type Props = {
     params: Promise<{ raceId: string }>
 }
 
-async function getRaceDetails(raceId: string): Promise<OpenF1Meeting | null> {
-    const res = await fetch(`https://api.openf1.org/v1/meetings?meeting_key=${raceId}`, {
+async function getRaceDetails(raceId: string): Promise<Race | null> {
+    const res = await fetch(`${API_URL}/public/races/${raceId}`, {
         next: { revalidate: 86400 },
     });
-    if (!res.ok) throw new Error('Failed to fetch race');
-    const response: OpenF1Meeting[] = await res.json();
-    if(response.length === 0){
-        return null;
-    }
-    return response[0];
+    if (!res.ok) return null;
+    return await res.json();
 }
 
 async function getAuthToken(): Promise<string | null> {
@@ -138,14 +136,18 @@ export default async function SpecificRace({ params }: Props) {
             <div className="flex flex-row gap-3 items-center">
                 <h1 className="text-xl">{raceDetails.meeting_official_name}</h1>
                 <Image
-                    src={raceDetails.country_flag}
+                    src={getFlagUrl(raceDetails.country_code)}
                     alt={`${raceDetails.country_name} flag`}
-                    width={120}
-                    height={68}
+                    width={80}
+                    height={60}
                     className="w-[30px] h-[17px] object-cover"
                 />
             </div>
-            <Image src={raceDetails.circuit_image} alt={`${raceDetails.circuit_short_name} track`} width={250} height={188} className="object-cover"/>
+            <CircuitMap
+                circuitId={raceDetails.circuit_id}
+                width={250}
+                height={188}
+            />
 
             <RaceContentTabs
                 raceId={raceId}

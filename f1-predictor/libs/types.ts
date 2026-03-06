@@ -1,19 +1,16 @@
-export interface OpenF1Meeting {
+export interface Race {
+    race_id: string;
     meeting_key: number;
     meeting_name: string;
     meeting_official_name: string;
     location: string;
-    country_key: number;
-    country_code: string;
     country_name: string;
-    country_flag: string;
-    circuit_key: number;
+    country_code: string;
     circuit_short_name: string;
-    circuit_type: string;
-    circuit_image: string;
-    gmt_offset: string;
+    circuit_id: string;
     date_start: string;
     date_end: string;
+    fp1_start: string;
     year: number;
 }
 
