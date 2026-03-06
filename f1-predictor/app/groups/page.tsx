@@ -1,4 +1,4 @@
-import {Group, OpenF1Meeting} from "@/libs/types";
+import {Group, Race} from "@/libs/types";
 import {RaceCard} from "@/components/RaceCard";
 import { CopyButton } from "@/components/CopyButton";
 import {NoGroupSection} from "@/components/NoGroupSection";
@@ -52,14 +52,13 @@ async function getUserGroup(): Promise<Group | null> {
     }
 }
 
-async function getGrandPrixRaces(): Promise<OpenF1Meeting[]> {
-    const res = await fetch('https://api.openf1.org/v1/meetings?year=2026', {
-        cache: 'force-cache',
+async function getGrandPrixRaces(): Promise<Race[]> {
+    const res = await fetch(`${API_URL}/public/races?year=2026`, {
         next: { revalidate: 86400 },
     });
     if (!res.ok) throw new Error('Failed to fetch races');
 
-    const allRaces: OpenF1Meeting[] = await res.json();
+    const allRaces: Race[] = await res.json();
     return allRaces.filter(race => race.meeting_name.includes('Grand Prix'));
 }
 
@@ -95,7 +94,7 @@ export default async function Groups() {
                     <h2 className="text-h2 mb-6">Upcoming Races</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 justify-items-center">
                         {upcomingRaces.map((race) => (
-                            <RaceCard key={race.meeting_key} race={race} />
+                            <RaceCard key={race.race_id} race={race} />
                         ))}
                     </div>
                     {pastRaces.length > 0 && (
@@ -106,7 +105,7 @@ export default async function Groups() {
                             <h2 className="text-h2 mb-6">Past Races</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 justify-items-center">
                                 {pastRaces.map((race) => (
-                                    <RaceCard key={race.meeting_key} race={race} />
+                                    <RaceCard key={race.race_id} race={race} />
                                 ))}
                             </div>
                         </>

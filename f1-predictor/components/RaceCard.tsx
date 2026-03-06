@@ -1,22 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LocalDate } from "./LocalDate";
+import { CircuitMap } from "./CircuitMap";
+import { getFlagUrl } from "@/libs/flags";
+import { Race } from "@/libs/types";
 
-interface RaceCardProps {
-    meeting_key: number
-    meeting_name: string
-    country_name: string
-    country_flag: string
-    circuit_short_name: string;
-    circuit_image: string
-    gmt_offset: string
-    date_start: string
-    date_end: string
-    year: number
-}
-
-export function RaceCard({race}: {race: RaceCardProps}) {
-
+export function RaceCard({race}: {race: Race}) {
     return (
         <div
             className="flex flex-col justify-between items-center w-[320px] h-[360px] p-5 border border-transparent transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:border-[var(--color-accent-muted)]"
@@ -28,24 +17,23 @@ export function RaceCard({race}: {race: RaceCardProps}) {
             <div className="flex flex-row items-center gap-2.5">
                 <h3 className="text-h3">{race.meeting_name}</h3>
                 <Image
-                    src={race.country_flag}
+                    src={getFlagUrl(race.country_code)}
                     alt={`${race.country_name} flag`}
-                    width={120}
-                    height={68}
+                    width={80}
+                    height={60}
                     className="w-[30px] h-[17px] object-cover"
                 />
             </div>
-            <Image
-                src={race.circuit_image}
-                alt={`${race.circuit_short_name} track`}
+            <CircuitMap
+                circuitId={race.circuit_id}
                 width={250}
                 height={188}
                 className="object-cover"
             />
             <div className="flex flex-col items-center gap-3">
-                <LocalDate iso={race.date_start} className="text-label" />
+                <LocalDate iso={race.fp1_start} className="text-label" />
                 <Link
-                    href={`/race/${race.meeting_key}`}
+                    href={`/race/${race.race_id}`}
                     className="btn btn-primary focus-ring"
                 >
                     Go to event

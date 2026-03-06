@@ -8,17 +8,10 @@ import PredictionScore from '../models/PredictionScore';
 import UserRaceScore from '../models/UserRaceScore';
 import { requireAuth, getAuth } from '../middleware/auth';
 
-import { fetchQualifyingPoleDriver } from '../scoring/fetchQualifyingPoleDriver';
-import { fetchRacePositions } from '../scoring/fetchRacePositions';
 import { scorePrediction, PositionType } from '../scoring/scorePrediction';
 import { aggregateScores } from '../scoring/aggregateScores';
 
 const RACE_POSITION_TYPES: PositionType[] = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10'];
-
-function posTypeToNumber(pt: PositionType): number | null {
-    if (pt === 'pole') return null;
-    return Number(pt.slice(1));
-}
 
 function numberToPosType(n: number): PositionType {
     return `p${n}` as PositionType;
@@ -27,31 +20,44 @@ const router = express.Router();
 
 router.use(requireAuth());
 
+/**
+ * POST /superadmin/calculate-points/:raceId
+ *
+ * Body: {
+ *   pole: "Driver Name",
+ *   p1: "Driver Name",
+ *   p2: "Driver Name",
+ *   ...
+ *   p10: "Driver Name",
+ *   p11: "Driver Name"   // p11 needed for +/-1 near-miss scoring
+ * }
+ */
 router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
     const { userId } = getAuth(req);
     if (!userId || userId !== process.env.ADMIN_ID) return res.sendStatus(403);
 
     const raceId = req.params.raceId;
-    if (!raceId) return res.status(400).json({ error: "Missing raceId (session_key)" });
+    if (!raceId) return res.status(400).json({ error: "Missing raceId" });
+
+    // Validate request body contains all required positions
+    const { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 } = req.body;
+    const positions = { pole, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 };
+    const missing = Object.entries(positions).find(([, val]) => !val || typeof val !== 'string' || val.trim() === '');
+    if (missing) {
+        return res.status(400).json({ error: `Missing or invalid result for ${missing[0]}` });
+    }
 
     let t: Transaction | null = null;
 
     try {
-        // Fetch race positions and qualifying pole driver in parallel — both are required
-        const [raceResult, poleDriverName] = await Promise.all([
-            fetchRacePositions(raceId),
-            fetchQualifyingPoleDriver(raceId)
-        ]);
+        const poleDriverName = pole.trim();
 
-        if (!raceResult.ok) {
-            return res.status(raceResult.error.status).json(raceResult.error);
+        // Build actualByPosition map from request body (positions 1-11)
+        const actualByPosition = new Map<number, string>();
+        for (let p = 1; p <= 11; p++) {
+            actualByPosition.set(p, positions[`p${p}` as keyof typeof positions]!.trim());
         }
 
-        if (!poleDriverName) {
-            return res.status(500).json({ error: "Qualifying data unavailable — cannot complete scoring without pole position" });
-        }
-
-        const { actualByPosition } = raceResult.data;
         const activePositionTypes: PositionType[] = ['pole', ...RACE_POSITION_TYPES];
 
         t = await sequelize.transaction();
@@ -74,7 +80,7 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
             transaction: t
         });
 
-        // 3) Load all predictions for that race
+        // Load all predictions for that race
         const predictions = await UserPrediction.findAll({
             where: {
                 race_identifier: raceId,
@@ -83,11 +89,10 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
             transaction: t
         });
 
-        // 4) Compute uniqueness counts for "unique exact" bonus
-        // Build the list of actual drivers for each active slot
+        // Compute uniqueness counts for "unique exact" bonus
         const actualDriversForSlots: string[] = [poleDriverName];
         for (const pt of RACE_POSITION_TYPES) {
-            const slot = posTypeToNumber(pt);
+            const slot = Number(pt.slice(1));
             if (slot) actualDriversForSlots.push(actualByPosition.get(slot)!);
         }
 
@@ -119,18 +124,17 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
             actualPosByDriver.set(actualByPosition.get(p)!, p);
         }
 
-        // 5) Create per-prediction score rows using scorePrediction
+        // Create per-prediction score rows using scorePrediction
         const scoreRows: any[] = [];
         for (const pred of predictions) {
             const posType = pred.position_type as PositionType;
             const predictedName = pred.driver_name;
 
-            // Determine the actual driver name for this slot
             let actualNameAtSlot: string;
             if (posType === 'pole') {
                 actualNameAtSlot = poleDriverName;
             } else {
-                const slot = posTypeToNumber(posType);
+                const slot = Number(posType.slice(1));
                 if (!slot) continue;
                 actualNameAtSlot = actualByPosition.get(slot)!;
             }
@@ -175,7 +179,7 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
             transaction: t
         });
 
-        // 6) Aggregate into UserRaceScores using aggregateScores
+        // Aggregate into UserRaceScores
         const groupedRows = new Map<string, {
             user_id: string;
             group_id: number;

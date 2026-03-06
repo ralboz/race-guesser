@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-race-data.js",
     "start": "nodemon dist/app.js",
     "start:prod": "node dist/app.js",
     "start:pm2": "pm2 start dist/app.js --name f1-pred-backend",

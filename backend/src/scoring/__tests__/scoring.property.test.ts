@@ -4,8 +4,6 @@ import { scorePrediction } from '../scorePrediction';
 import type { PositionType } from '../scorePrediction';
 import { aggregateScores } from '../aggregateScores';
 import type { ScoreRow } from '../aggregateScores';
-import { extractPoleDriver } from '../extractPoleDriver';
-import type { SessionResultRow } from '../extractPoleDriver';
 
 //  Random data generators 
 
@@ -33,10 +31,6 @@ const arbScoreRow: fc.Arbitrary<ScoreRow> = fc
     final_points: unique_correct ? base_points * 2 : base_points,
   }));
 
-const arbSessionResultRow: fc.Arbitrary<SessionResultRow> = fc.record({
-  position: fc.integer({ min: 1, max: 20 }),
-  driver_number: fc.integer({ min: 1, max: 99 }),
-});
 
 // Sanity check: make sure our generators produce valid data 
 
@@ -48,8 +42,7 @@ describe('scoring property test setup', () => {
         arbSlotPositionType,
         arbDriverName,
         arbScoreRow,
-        arbSessionResultRow,
-        (posType, slotType, driverName, scoreRow, sessionRow) => {
+        (posType, slotType, driverName, scoreRow) => {
           expect(
             ['pole', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10'],
           ).toContain(posType);
@@ -62,10 +55,6 @@ describe('scoring property test setup', () => {
             ? scoreRow.base_points * 2
             : scoreRow.base_points;
           expect(scoreRow.final_points).toBe(expectedFinal);
-          expect(sessionRow.position).toBeGreaterThanOrEqual(1);
-          expect(sessionRow.position).toBeLessThanOrEqual(20);
-          expect(sessionRow.driver_number).toBeGreaterThanOrEqual(1);
-          expect(sessionRow.driver_number).toBeLessThanOrEqual(99);
         },
       ),
     );
@@ -223,37 +212,4 @@ describe('aggregateScores – totals and hit counts', () => {
   });
 });
 
-// extractPoleDriver
-describe('extractPoleDriver – finding who got pole', () => {
-  // Given qualifying results and a driver number to name map, we should get the
-  // P1 driver's name back (or null if the data is incomplete)
-  it('returns the pole sitter name when the data lines up, null otherwise', () => {
-    fc.assert(
-      fc.property(
-        fc.array(arbSessionResultRow),
-        fc.dictionary(
-          fc.integer({ min: 1, max: 99 }).map(String),
-          arbDriverName,
-        ),
-        (results, dictMap) => {
-          const driverNumToNameMap: Record<number, string> = {};
-          for (const [key, value] of Object.entries(dictMap)) {
-            driverNumToNameMap[Number(key)] = value;
-          }
 
-          const actual = extractPoleDriver(results, driverNumToNameMap);
-          const poleRow = results.find((r) => r.position === 1);
-
-          if (!poleRow) {
-            expect(actual).toBeNull();
-          } else if (!(poleRow.driver_number in driverNumToNameMap)) {
-            expect(actual).toBeNull();
-          } else {
-            expect(actual).toBe(driverNumToNameMap[poleRow.driver_number]);
-          }
-        },
-      ),
-      { numRuns: 100 },
-    );
-  });
-});

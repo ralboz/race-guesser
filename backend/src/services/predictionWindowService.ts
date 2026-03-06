@@ -1,3 +1,5 @@
+import { getRaceById } from '../data/races';
+
 export interface PredictionWindowInfo {
   openTime: Date;
   closeTime: Date;
@@ -38,43 +40,24 @@ interface CacheEntry {
 const sessionCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60 * 60 * 1000 * 24; // 24 hours cache
 
-// Fetches the prediction close time based on first practice session's date_start for a given meeting key
-export async function fetchCloseTime(meetingKey: string): Promise<Date> {
+// Fetches the prediction close time from the static race data's fp1_start for a given race id
+export async function fetchCloseTime(raceId: string): Promise<Date> {
   const now = Date.now();
-  const cached = sessionCache.get(meetingKey);
+  const cached = sessionCache.get(raceId);
 
   if (cached && now - cached.fetchedAt < CACHE_TTL_MS) {
     return cached.closeTime;
   }
 
-  let response: Response;
-  try {
-    response = await fetch(
-      `https://api.openf1.org/v1/sessions?meeting_key=${encodeURIComponent(meetingKey)}`,
-    );
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch sessions from OpenF1 API for meeting_key "${meetingKey}": ${error instanceof Error ? error.message : String(error)}`,
-    );
+  const race = getRaceById(raceId);
+
+  if (!race) {
+    throw new Error(`No race found for race_id "${raceId}"`);
   }
 
-  if (!response.ok) {
-    throw new Error(
-      `OpenF1 API returned status ${response.status} for meeting_key "${meetingKey}"`,
-    );
-  }
+  const closeTime = new Date(race.fp1_start);
 
-  const sessions: { date_start: string }[] = await response.json();
-
-  if (!Array.isArray(sessions) || sessions.length === 0) {
-    throw new Error(
-      `No sessions available for meeting_key "${meetingKey}"`,
-    );
-  }
-
-  const closeTime = new Date(sessions[0].date_start); // first session is closing time
-
-  sessionCache.set(meetingKey, { closeTime, fetchedAt: Date.now() });
+  sessionCache.set(raceId, { closeTime, fetchedAt: Date.now() });
 
   return closeTime;
 }
@@ -84,12 +67,12 @@ export function clearCache(): void {
   sessionCache.clear();
 }
 
-// returns prediction window object for a given meetingkey/raceid
+// returns prediction window object for a given race id
 export async function getPredictionWindow(
-  meetingKey: string,
+  raceId: string,
   now?: Date,
 ): Promise<PredictionWindowInfo> {
-  const closeTime = await fetchCloseTime(meetingKey);
+  const closeTime = await fetchCloseTime(raceId);
   const openTime = computeOpenTime(closeTime);
   const status = computeStatus(now ?? new Date(), openTime, closeTime);
   return { openTime, closeTime, status };
