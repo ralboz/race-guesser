@@ -12,12 +12,18 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
     const { getToken } = useAuth();
     const [groupId, setGroupId] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleSubmit = async () => {
-        if (!groupId.trim() || !password.trim()) {
-            setError('Please fill in all fields');
+        if (!groupId.trim()) {
+            setError('Please enter a group code');
+            return;
+        }
+
+        if (showPassword && !password.trim()) {
+            setError('Password is required for this group');
             return;
         }
 
@@ -29,7 +35,7 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
 
             const response = await axios.post(`${API_URL}/protected/join-group`, {
                 groupId,
-                groupPassword: password
+                groupPassword: password || undefined
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -41,7 +47,13 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
             onSuccess();
         } catch (err: any) {
             console.error('Error joining group:', err);
-            setError(err.response?.data?.message || 'Failed to join group');
+            const message = err.response?.data?.message || 'Failed to join group';
+            if (message === 'Password is required for private groups') {
+                setShowPassword(true);
+                setError('This is a private group — enter the password to join.');
+            } else {
+                setError(message);
+            }
         } finally {
             setLoading(false);
         }
@@ -104,23 +116,26 @@ const JoinGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess
                         />
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-label">Password</label>
-                        <input
-                            type="password"
-                            placeholder="Enter group password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
-                            style={{
-                                backgroundColor: 'var(--bg-surface)',
-                                color: 'var(--text-primary)',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--text-muted)',
-                            }}
-                            disabled={loading}
-                        />
-                    </div>
+                    {showPassword && (
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-label">Password</label>
+                            <input
+                                type="password"
+                                placeholder="Enter group password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-3 py-2.5 text-sm transition-shadow outline-none focus-ring"
+                                style={{
+                                    backgroundColor: 'var(--bg-surface)',
+                                    color: 'var(--text-primary)',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--text-muted)',
+                                }}
+                                disabled={loading}
+                                autoFocus
+                            />
+                        </div>
+                    )}
 
                     <button
                         className="btn btn-primary w-full mt-2"

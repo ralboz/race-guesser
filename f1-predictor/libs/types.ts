@@ -65,6 +65,12 @@ export interface LeaderboardEntry {
     rank: number;
 }
 
+export interface PublicGroupInfo {
+    id: number;
+    groupName: string;
+    memberCount: number;
+}
+
 export interface SeasonLeaderboardEntry {
     user_id: string;
     display_name: string;

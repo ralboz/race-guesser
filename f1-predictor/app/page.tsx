@@ -2,6 +2,7 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { FiUsers, FiTarget, FiAward, FiCheckCircle, FiTrendingUp, FiZap } from "react-icons/fi";
 import type { Metadata } from "next";
+import { API_URL } from "@/libs/api";
 
 export const metadata: Metadata = {
     title: "Grid Guesser — Free F1 Prediction Game | Predict Formula 1 Race Results",
@@ -32,6 +33,14 @@ const jsonLd = {
 export default async function Home() {
     const user = await currentUser();
 
+    let stats: { groupCount: number; userCount: number } | null = null;
+    try {
+        const res = await fetch(`${API_URL}/public/stats`, { next: { revalidate: 300 } });
+        if (res.ok) stats = await res.json();
+    } catch (e) {
+        console.error('Failed to fetch public stats:', e);
+    }
+
     return (
         <div>
             <script
@@ -60,6 +69,28 @@ export default async function Home() {
                         <Link href="/sign-in" className="btn btn-primary text-lg">
                             Get Started
                         </Link>
+                    )}
+
+                    {stats && (stats.groupCount > 0 || stats.userCount > 0) && (
+                        <div className="flex flex-col gap-4 mt-8">
+                            <h2 className="text-body">Join our growing community</h2>
+                            <div className="flex flex-row justify-center gap-6">
+                                <div
+                                    className="flex flex-col items-center px-6 py-4"
+                                    style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)' }}
+                                >
+                                    <span className="text-3xl font-semibold">{stats.groupCount}</span>
+                                    <span className="text-sm opacity-60">{stats.groupCount === 1 ? 'group' : 'groups'}</span>
+                                </div>
+                                <div
+                                    className="flex flex-col items-center px-6 py-4"
+                                    style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)' }}
+                                >
+                                    <span className="text-3xl font-semibold">{stats.userCount}</span>
+                                    <span className="text-sm opacity-60">{stats.userCount === 1 ? 'player' : 'players'}</span>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </section>
 
