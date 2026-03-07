@@ -5,7 +5,7 @@ import { CircuitMap } from "./CircuitMap";
 import { getFlagUrl } from "@/libs/flags";
 import { Race } from "@/libs/types";
 
-export function RaceCard({race}: {race: Race}) {
+export function RaceCard({race, hasGroup = true}: {race: Race; hasGroup?: boolean}) {
     return (
         <div
             className="flex flex-col justify-between items-center w-[320px] h-[360px] p-5 border border-transparent transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:border-[var(--color-accent-muted)]"
@@ -32,12 +32,16 @@ export function RaceCard({race}: {race: Race}) {
             />
             <div className="flex flex-col items-center gap-3">
                 <LocalDate iso={race.fp1_start} className="text-label" />
-                <Link
-                    href={`/race/${race.race_id}`}
-                    className="btn btn-primary focus-ring"
-                >
-                    Go to event
-                </Link>
+                {hasGroup ? (
+                    <Link
+                        href={`/race/${race.race_id}`}
+                        className="btn btn-primary focus-ring"
+                    >
+                        Go to event
+                    </Link>
+                ) : (
+                    <span className="text-sm opacity-60">Join a group to start predicting</span>
+                )}
             </div>
         </div>
     );

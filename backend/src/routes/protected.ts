@@ -214,6 +214,12 @@ router.get('/prediction/check/:raceId', async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const { raceId } = req.params;
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.status(403).json({ message: 'User must be a member of a group', code: 'NO_GROUP' });
+    }
+
     const predictions = await UserPrediction.findAll({
       where: { user_id: userId, race_identifier: raceId }
     });

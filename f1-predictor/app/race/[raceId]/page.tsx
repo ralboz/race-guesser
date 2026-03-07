@@ -47,6 +47,10 @@ async function userPredictionStatus(raceId: string): Promise<PredictionCheckResp
     });
 
     if (res.status === 401 || res.status === 403) {
+        const body = await res.json().catch(() => null);
+        if (body?.code === 'NO_GROUP') {
+            redirect('/groups');
+        }
         redirect(`/sign-in?redirect_url=/race/${raceId}`);
     }
 

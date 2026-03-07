@@ -46,7 +46,7 @@ export function GroupsPageContent({ isSignedIn, userGroup, publicGroups, upcomin
                 <h1 className="text-3xl">You aren&apos;t in a group yet! Do you want to join or create one?</h1>
                 <NoGroupSection />
                 <PublicGroupList groups={publicGroups} isSignedIn={isSignedIn} />
-                <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} />
+                <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} hasGroup={false} />
             </div>
         );
     }
@@ -69,7 +69,7 @@ export function GroupsPageContent({ isSignedIn, userGroup, publicGroups, upcomin
             </div>
 
             <PublicGroupList groups={publicGroups} isSignedIn={isSignedIn} />
-            <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} />
+            <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} hasGroup={false} />
         </div>
     );
 }
