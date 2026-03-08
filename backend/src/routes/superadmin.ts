@@ -34,7 +34,8 @@ router.use(requireAuth());
  */
 router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
     const { userId } = getAuth(req);
-    if (!userId || userId !== process.env.ADMIN_ID) return res.sendStatus(403);
+    const adminIds = (process.env.ADMIN_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!userId || !adminIds.includes(userId)) return res.sendStatus(403);
 
     const raceId = req.params.raceId;
     if (!raceId) return res.status(400).json({ error: "Missing raceId" });

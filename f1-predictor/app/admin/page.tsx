@@ -5,7 +5,7 @@ import { DRIVERS_2026 } from '@/libs/consts';
 import { Race } from '@/libs/types';
 import { API_URL } from '@/libs/api';
 
-const ADMIN_ID = process.env.NEXT_PUBLIC_ADMIN_ID;
+const ADMIN_IDS = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(s => s.trim());
 
 const POSITIONS = ['pole', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11'] as const;
 const POSITION_LABELS: Record<string, string> = {
@@ -35,7 +35,7 @@ export default function AdminPage() {
             .catch(() => {});
     }, []);
 
-    if (!userId || userId !== ADMIN_ID) {
+    if (!userId || !ADMIN_IDS.includes(userId)) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <p style={{ color: 'var(--text-secondary)' }}>Not authorized.</p>
