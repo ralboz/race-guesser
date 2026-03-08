@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/race/", "/leader-board/", "/groups/manage"],
+        disallow: ["/race/", "/leader-board/", "/groups/manage", "/admin"],
       },
     ],
     sitemap: "https://gridguesser.com/sitemap.xml",
