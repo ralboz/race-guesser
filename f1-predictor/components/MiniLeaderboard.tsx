@@ -57,12 +57,17 @@ export default function MiniLeaderboard({
 
   return (
     <div
-      className="w-full overflow-hidden"
-      style={{
-        backgroundColor: "var(--bg-secondary)",
-        borderRadius: "var(--radius-lg)",
-      }}
+      className="w-full overflow-x-auto"
+      style={{ borderRadius: "var(--radius-lg)" }}
     >
+      <div
+        className="min-w-[480px]"
+        style={{
+          backgroundColor: "var(--bg-secondary)",
+          borderRadius: "var(--radius-lg)",
+          overflow: "hidden",
+        }}
+      >
       <table className="w-full text-sm">
         <thead>
           <tr
@@ -77,6 +82,7 @@ export default function MiniLeaderboard({
             <th className="px-3 py-2 text-right font-medium">Points</th>
             <th className="px-3 py-2 text-right font-medium">Exact</th>
             <th className="px-3 py-2 text-right font-medium">Near</th>
+            <th className="px-3 py-2 text-right font-medium">Unique</th>
           </tr>
         </thead>
         <tbody>
@@ -120,11 +126,15 @@ export default function MiniLeaderboard({
                 <td className="px-3 py-2 text-right" style={{ color: "var(--color-near)" }}>
                   {entry.near_hits}
                 </td>
+                <td className="px-3 py-2 text-right" style={{ color: "var(--color-unique)" }}>
+                  {entry.unique_correct_hits}
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

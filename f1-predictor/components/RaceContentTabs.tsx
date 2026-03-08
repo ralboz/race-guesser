@@ -114,7 +114,7 @@ export default function RaceContentTabs({
                     </div>
                 )}
                 {activeTab === 'leaderboard' && (
-                    <div>
+                    <div className="mt-2">
                         {leaderboard.length > 0 ? (
                             <MiniLeaderboard leaderboard={leaderboard} currentUserId={currentUserId} />
                         ) : (
