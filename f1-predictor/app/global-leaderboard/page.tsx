@@ -44,7 +44,6 @@ export default async function GlobalLeaderboardPage() {
         currentUser={currentUser}
         currentUserId={currentUserId}
         raceCount={raceCount}
-        totalParticipants={totalParticipants}
       />
     </div>
   );

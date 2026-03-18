@@ -8,7 +8,6 @@ type GlobalLeaderboardProps = {
   currentUser: GlobalLeaderboardEntry | null;
   currentUserId: string;
   raceCount: number;
-  totalParticipants: number;
 };
 
 function RankCell({ rank }: { rank: number }) {
@@ -89,16 +88,12 @@ export default function GlobalLeaderboard({
   currentUser,
   currentUserId,
   raceCount,
-  totalParticipants,
 }: GlobalLeaderboardProps) {
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 mb-1">
-        <FaGlobe style={{ color: "var(--color-accent)" }} />
-        <h2 className="text-h2">Global Leaderboard</h2>
-      </div>
+      <h2 className="text-h2 mb-1">Global Leaderboard</h2>
       <p className="text-caption mb-4">
-        Top 50 of {totalParticipants} players across {raceCount} {raceCount === 1 ? "race" : "races"} — base points only, no unique bonus
+        Top 50 across {raceCount} {raceCount === 1 ? "race" : "races"} — base points only, no unique bonus
       </p>
 
       {leaderboard.length === 0 ? (
