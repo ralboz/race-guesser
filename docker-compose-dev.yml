@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  mysql-dev:
+    image: mysql:8.0
+    container_name: grif-guesser  # Replace 'project' with your app name
+    ports:
+      - "3307:3306"  # Host:3307 -> Container:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: devroot
+      MYSQL_DATABASE: f1_predictions
+      MYSQL_USER: sequelize_user
+      MYSQL_PASSWORD: sequelize_pass
+    volumes:
+      - mysql_dev_data:/var/lib/mysql  # Persist data
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_dev_data:

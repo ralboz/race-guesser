@@ -16,10 +16,12 @@ export default function Navbar() {
               { href: '/', name: 'Home' },
               { href: '/groups', name: 'Groups' },
               { href: '/leader-board', name: 'Leaderboard' },
+              { href: '/global-leaderboard', name: 'Global Rankings' },
           ]
         : [
               { href: '/', name: 'Home' },
               { href: '/groups', name: 'Groups' },
+              { href: '/global-leaderboard', name: 'Global Rankings' },
           ];
 
     const handleLogout = () => {

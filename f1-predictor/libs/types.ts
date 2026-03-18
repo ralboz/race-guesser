@@ -80,3 +80,12 @@ export interface SeasonLeaderboardEntry {
     unique_correct_hits: number;
     rank: number;
 }
+
+export interface GlobalLeaderboardEntry {
+    user_id: string;
+    display_name: string;
+    total_points: number;
+    exact_hits: number;
+    near_hits: number;
+    rank: number;
+}

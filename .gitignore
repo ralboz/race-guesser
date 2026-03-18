@@ -45,3 +45,6 @@ backend/node_modules
 backend/dist
 backend/*.js
 backend/.env*
+
+# clerk configuration (can include secrets)
+f1-predictor/.clerk/
