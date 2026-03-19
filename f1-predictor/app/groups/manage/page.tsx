@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/libs/api";
 import { GroupAdminPanel } from "@/components/GroupAdminPanel";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Manage Group",
+    robots: { index: false, follow: false },
+};
 
 async function getOwnedGroup() {
     let token;

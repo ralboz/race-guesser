@@ -2,6 +2,16 @@ import { Group, Race, PublicGroupInfo } from "@/libs/types";
 import { GroupsPageContent } from "@/components/GroupsPageContent";
 import { auth } from "@clerk/nextjs/server";
 import { API_URL } from "@/libs/api";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Groups — Create or Join an F1 Prediction League",
+    description:
+        "Create a private F1 prediction league or join a public group. Compete with friends across the full Formula 1 season on Grid Guesser.",
+    alternates: {
+        canonical: "https://gridguesser.com/groups",
+    },
+};
 
 async function getUserGroup(token: string): Promise<Group | null> {
     try {

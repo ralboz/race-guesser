@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Global Leaderboard | Grid Guesser",
   description:
     "See how F1 prediction players rank across all groups. Top 50 global leaderboard for the current season.",
+  alternates: {
+    canonical: "https://gridguesser.com/global-leaderboard",
+  },
 };
 
 interface GlobalLeaderboardResponse {
@@ -35,7 +38,7 @@ export default async function GlobalLeaderboardPage() {
     );
   }
 
-  const { leaderboard, currentUser, raceCount, totalParticipants }: GlobalLeaderboardResponse = await res.json();
+  const { leaderboard, currentUser, raceCount }: GlobalLeaderboardResponse = await res.json();
 
   return (
     <div className="max-w-2xl mx-auto p-4">

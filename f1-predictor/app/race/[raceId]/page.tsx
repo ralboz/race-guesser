@@ -6,6 +6,11 @@ import {redirect} from "next/navigation";
 import { API_URL } from "@/libs/api";
 import { CircuitMap } from "@/components/CircuitMap";
 import { getFlagUrl } from "@/libs/flags";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+};
 
 export type PredictionWindowStatus = {
     status: 'not_yet_open' | 'open' | 'closed';

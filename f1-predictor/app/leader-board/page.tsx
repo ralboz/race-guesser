@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import { SeasonLeaderboardEntry } from "@/libs/types";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 import { API_URL } from "@/libs/api";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Group Leaderboard",
+  robots: { index: false, follow: false },
+};
 
 interface SeasonLeaderboardResponse {
   leaderboard: SeasonLeaderboardEntry[];

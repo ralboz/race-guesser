@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { API_URL } from "@/libs/api";
 
 export const metadata: Metadata = {
-    title: "Grid Guesser — Free F1 Prediction Game | Predict Formula 1 Race Results",
+    title: {
+        absolute: "Grid Guesser — Free F1 Prediction Game | Predict Formula 1 Race Results",
+    },
     description:
         "Play Grid Guesser, the free Formula 1 prediction game. Predict the top 10 finishing positions, create private leagues with friends, earn points, and compete across the full F1 season.",
     alternates: {
