@@ -64,4 +64,4 @@ jobs:
             cd f1-predictor
             npm ci --production=false
             npm run build
-            pm2 restart next-frontend || pm2 start npm --name next-frontend -- start
+            pm2 restart frontend-grid-guesser || pm2 start npm --name frontend-grid-guesser -- start
