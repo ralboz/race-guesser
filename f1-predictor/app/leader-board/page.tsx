@@ -60,6 +60,7 @@ export default async function LeaderBoardPage() {
         groupName={groupData.group.group_name}
         currentUserId={currentUserId}
       />
+      <p>test</p>
     </div>
   );
 }
