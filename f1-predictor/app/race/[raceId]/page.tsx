@@ -18,6 +18,11 @@ export type PredictionWindowStatus = {
     closeTime: string;
 };
 
+export type SubmissionCount = {
+    submitted: number;
+    total: number;
+};
+
 type Props = {
     params: Promise<{ raceId: string }>
 }
@@ -109,12 +114,29 @@ async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowSt
     }
 }
 
+async function fetchSubmissionCount(raceId: string): Promise<SubmissionCount | null> {
+    const token = await getAuthToken();
+    if (!token) return null;
+
+    try {
+        const res = await fetch(`${API_URL}/protected/submission-count/${raceId}`, {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
+
 export default async function SpecificRace({ params }: Props) {
     const { raceId } = await params;
-    const [raceDetails, predictionStatus, windowStatus] = await Promise.all([
+    const [raceDetails, predictionStatus, windowStatus, submissionCount] = await Promise.all([
         getRaceDetails(raceId),
         userPredictionStatus(raceId),
-        fetchPredictionWindow(raceId)
+        fetchPredictionWindow(raceId),
+        fetchSubmissionCount(raceId)
     ]);
 
     if(!raceDetails || !predictionStatus) return null;
@@ -166,6 +188,7 @@ export default async function SpecificRace({ params }: Props) {
                 leaderboard={leaderboardResponse?.leaderboard ?? []}
                 currentUserId={currentUserId}
                 windowStatus={windowStatus}
+                submissionCount={submissionCount}
             />
         </div>
     )

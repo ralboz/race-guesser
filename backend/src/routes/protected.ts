@@ -555,6 +555,35 @@ router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   }
 });
 
+// Get submission count for user's group on a specific race
+router.get('/submission-count/:raceId', async (req: Request, res: Response) => {
+  try {
+    const userId = getAuth(req).userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { raceId } = req.params;
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.status(403).json({ message: 'User must be a member of a group', code: 'NO_GROUP' });
+    }
+
+    const memberCount = await GroupMember.count({ where: { group_id } }) + 1;
+
+    // Count distinct users who submitted predictions
+    const submittedUsers = await UserPrediction.count({
+      where: { group_id, race_identifier: raceId },
+      distinct: true,
+      col: 'user_id',
+    });
+
+    res.json({ submitted: submittedUsers, total: memberCount });
+  } catch (error) {
+    console.error('Error fetching submission count:', error);
+    res.status(500).json({ message: 'Error fetching submission count' });
+  }
+});
+
 // returns prediction time window for race.
 router.get('/prediction-window/:raceId', async (req: Request, res: Response) => {
   try {
