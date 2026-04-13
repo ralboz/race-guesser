@@ -9,6 +9,7 @@ import { GroupMember, UserProfile, Group, UserPrediction, ReminderLog } from '..
 import { hashPassword } from '../utils/password';
 import { getRaceById } from '../data/races';
 import { getEligibleRecipients } from '../services/reminderService';
+import { getPredictionWindow } from '../services/predictionWindowService';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -151,6 +152,19 @@ router.post('/send-reminder/:raceId', adminMutationLimiter, async (req: Request,
     const race = getRaceById(raceIdStr);
     if (!race) {
       return res.status(404).json({ message: 'Race not found' });
+    }
+
+    // Only allow reminders when the prediction window is open
+    const bypassWindow = process.env.BYPASS_PREDICTION_WINDOW === 'true';
+    if (!bypassWindow) {
+      try {
+        const window = await getPredictionWindow(raceIdStr);
+        if (window.status !== 'open') {
+          return res.status(403).json({ message: 'Prediction window is not open for this race' });
+        }
+      } catch {
+        return res.status(503).json({ message: 'Unable to verify prediction window' });
+      }
     }
 
     const members = await GroupMember.findAll({ where: { group_id: group.id } });

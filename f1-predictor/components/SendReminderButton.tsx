@@ -10,17 +10,27 @@ export function SendReminderButton({ raceId }: { raceId: string }) {
     const [alreadySent, setAlreadySent] = useState(false);
     const [result, setResult] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [windowOpen, setWindowOpen] = useState(false);
 
     useEffect(() => {
         (async () => {
             try {
                 const token = await getToken();
-                const res = await fetch(`${API_URL}/admin/reminder-status/${raceId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (res.ok) {
-                    const data = await res.json();
+                const [statusRes, windowRes] = await Promise.all([
+                    fetch(`${API_URL}/admin/reminder-status/${raceId}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                    fetch(`${API_URL}/protected/prediction-window/${raceId}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                ]);
+                if (statusRes.ok) {
+                    const data = await statusRes.json();
                     if (data.sent) setAlreadySent(true);
+                }
+                if (windowRes.ok) {
+                    const data = await windowRes.json();
+                    setWindowOpen(data.status === 'open');
                 }
             } catch {
                 // not an admin or failed — hide gracefully
@@ -49,7 +59,7 @@ export function SendReminderButton({ raceId }: { raceId: string }) {
         }
     };
 
-    if (loading) return null;
+    if (loading || !windowOpen) return null;
 
     return (
         <div className="flex flex-col items-center gap-1 w-full">
