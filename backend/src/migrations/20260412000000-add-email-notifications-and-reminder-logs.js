@@ -13,8 +13,12 @@ module.exports = {
       });
     }
 
+    // Detect the actual type of Groups.id so the FK column matches exactly
+    const groupsDesc = await queryInterface.describeTable('Groups');
+    const idType = groupsDesc.id.type.toUpperCase();
+    const groupIdType = idType.includes('BIGINT') ? Sequelize.BIGINT : Sequelize.INTEGER;
+
     // Create ReminderLogs table to enforce one reminder per race per group
-    // Use BIGINT.UNSIGNED to match Groups.id which MySQL stores as unsigned
     await queryInterface.createTable('ReminderLogs', {
       id: {
         type: Sequelize.INTEGER,
@@ -22,7 +26,7 @@ module.exports = {
         autoIncrement: true,
       },
       group_id: {
-        type: Sequelize.INTEGER,
+        type: groupIdType,
         allowNull: false,
         references: { model: 'Groups', key: 'id' },
         onUpdate: 'CASCADE',
