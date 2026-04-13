@@ -17,6 +17,9 @@ vi.mock('@/components/PublicGroupList', () => ({
 vi.mock('@/components/RaceList', () => ({
     RaceList: () => <div data-testid="race-list" />,
 }));
+vi.mock('@/components/NotificationToggle', () => ({
+    NotificationToggle: () => <div data-testid="notification-toggle" />,
+}));
 
 const mockRace: Race = {
     race_id: 'bahrain-2026',
