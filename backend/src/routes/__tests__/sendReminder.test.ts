@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getEligibleRecipients, ReminderCandidate } from '../../services/reminderService';
+import { getEligibleRecipients, canSendReminder, ReminderCandidate, WindowStatus } from '../../services/reminderService';
 
 describe('getEligibleRecipients', () => {
   const members = ['user_a', 'user_b', 'user_c'];
@@ -88,5 +88,33 @@ describe('getEligibleRecipients', () => {
     const result = getEligibleRecipients([], new Set(), []);
 
     expect(result).toEqual([]);
+  });
+});
+
+
+describe('canSendReminder', () => {
+  it('allows when window is open and not already sent', () => {
+    const result = canSendReminder('open', false);
+    expect(result).toEqual({ allowed: true });
+  });
+
+  it('rejects when already sent', () => {
+    const result = canSendReminder('open', true);
+    expect(result).toEqual({ allowed: false, reason: 'Reminder already sent for this race' });
+  });
+
+  it('rejects when window is not yet open', () => {
+    const result = canSendReminder('not_yet_open', false);
+    expect(result).toEqual({ allowed: false, reason: 'Prediction window is not open for this race' });
+  });
+
+  it('rejects when window is closed', () => {
+    const result = canSendReminder('closed', false);
+    expect(result).toEqual({ allowed: false, reason: 'Prediction window is not open for this race' });
+  });
+
+  it('rejects with already-sent reason even if window is also closed', () => {
+    const result = canSendReminder('closed', true);
+    expect(result).toEqual({ allowed: false, reason: 'Reminder already sent for this race' });
   });
 });

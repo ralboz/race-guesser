@@ -8,7 +8,7 @@ import { requireGroupOwner } from '../middleware/requireGroupOwner';
 import { GroupMember, UserProfile, Group, UserPrediction, ReminderLog } from '../models';
 import { hashPassword } from '../utils/password';
 import { getRaceById } from '../data/races';
-import { getEligibleRecipients } from '../services/reminderService';
+import { getEligibleRecipients, canSendReminder, WindowStatus } from '../services/reminderService';
 import { getPredictionWindow } from '../services/predictionWindowService';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -145,26 +145,28 @@ router.post('/send-reminder/:raceId', adminMutationLimiter, async (req: Request,
     const existing = await ReminderLog.findOne({
       where: { group_id: group.id, race_identifier: raceIdStr },
     });
-    if (existing) {
-      return res.status(409).json({ message: 'Reminder already sent for this race' });
+
+    // Check prediction window status
+    let windowStatus: WindowStatus = 'open';
+    const bypassWindow = process.env.BYPASS_PREDICTION_WINDOW === 'true';
+    if (!bypassWindow) {
+      try {
+        const window = await getPredictionWindow(raceIdStr);
+        windowStatus = window.status;
+      } catch {
+        return res.status(503).json({ message: 'Unable to verify prediction window' });
+      }
+    }
+
+    const check = canSendReminder(windowStatus, !!existing);
+    if (!check.allowed) {
+      const status = existing ? 409 : 403;
+      return res.status(status).json({ message: check.reason });
     }
 
     const race = getRaceById(raceIdStr);
     if (!race) {
       return res.status(404).json({ message: 'Race not found' });
-    }
-
-    // Only allow reminders when the prediction window is open
-    const bypassWindow = process.env.BYPASS_PREDICTION_WINDOW === 'true';
-    if (!bypassWindow) {
-      try {
-        const window = await getPredictionWindow(raceIdStr);
-        if (window.status !== 'open') {
-          return res.status(403).json({ message: 'Prediction window is not open for this race' });
-        }
-      } catch {
-        return res.status(503).json({ message: 'Unable to verify prediction window' });
-      }
     }
 
     const members = await GroupMember.findAll({ where: { group_id: group.id } });
