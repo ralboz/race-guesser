@@ -3,6 +3,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { NoGroupSection } from "@/components/NoGroupSection";
 import { PublicGroupList } from "@/components/PublicGroupList";
 import { RaceList } from "@/components/RaceList";
+import { NotificationToggle } from "@/components/NotificationToggle";
 import Link from "next/link";
 
 interface GroupsPageContentProps {
@@ -34,7 +35,8 @@ export function GroupsPageContent({ isSignedIn, userGroup, publicGroups, upcomin
                         </div>
                     </div>
                 )}
-                <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} />
+                {!userGroup.isOwner && <NotificationToggle />}
+                <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} isOwner={!!userGroup.isOwner} />
             </div>
         );
     }

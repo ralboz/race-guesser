@@ -607,4 +607,40 @@ router.get('/prediction-window/:raceId', async (req: Request, res: Response) => 
   }
 });
 
+// Get/update email notification preference
+router.get('/notification-preference', async (req: Request, res: Response) => {
+  try {
+    const userId = getAuth(req).userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const profile = await UserProfile.findByPk(userId);
+    res.json({ email_notifications: profile?.email_notifications ?? false });
+  } catch (error) {
+    console.error('Error fetching notification preference:', error);
+    res.status(500).json({ message: 'Error fetching notification preference' });
+  }
+});
+
+router.patch('/notification-preference', mutationLimiter, async (req: Request, res: Response) => {
+  try {
+    const userId = getAuth(req).userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { email_notifications } = req.body;
+    if (typeof email_notifications !== 'boolean') {
+      return res.status(400).json({ message: 'email_notifications must be a boolean' });
+    }
+
+    const [affectedRows] = await UserProfile.update(
+      { email_notifications },
+      { where: { user_id: userId } }
+    );
+
+    res.json({ email_notifications });
+  } catch (error) {
+    console.error('Error updating notification preference:', error);
+    res.status(500).json({ message: 'Error updating notification preference' });
+  }
+});
+
 export default router;

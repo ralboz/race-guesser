@@ -47,6 +47,8 @@ async function syncUserProfile(req: Request, res: Response, next: NextFunction):
       user_id: userId,
       display_name: displayName,
       updated_at: new Date(),
+    }, {
+      fields: ['display_name', 'updated_at'],
     }).catch((error) => {
       console.error('Failed to upsert UserProfile:', error);
     });

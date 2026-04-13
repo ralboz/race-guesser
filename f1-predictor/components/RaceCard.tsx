@@ -4,8 +4,9 @@ import { LocalDate } from "./LocalDate";
 import { CircuitMap } from "./CircuitMap";
 import { getFlagUrl } from "@/libs/flags";
 import { Race } from "@/libs/types";
+import { SendReminderButton } from "./SendReminderButton";
 
-export function RaceCard({race, hasGroup = true}: {race: Race; hasGroup?: boolean}) {
+export function RaceCard({race, hasGroup = true, showReminder = false}: {race: Race; hasGroup?: boolean; showReminder?: boolean}) {
     return (
         <div
             className="flex flex-col justify-between items-center w-[320px] h-[360px] p-5 border border-transparent transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:border-[var(--color-accent-muted)]"
@@ -42,6 +43,7 @@ export function RaceCard({race, hasGroup = true}: {race: Race; hasGroup?: boolea
                 ) : (
                     <span className="text-sm opacity-60">Join a group to start predicting</span>
                 )}
+                {showReminder && <SendReminderButton raceId={race.race_id} />}
             </div>
         </div>
     );

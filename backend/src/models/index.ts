@@ -3,6 +3,7 @@ import Group from './Group';
 import UserPrediction from './UserPrediction';
 import GroupMember from './GroupMember';
 import UserProfile from './UserProfile';
+import ReminderLog from './ReminderLog';
 
 const initializeDatabase = async () => {
   try {
@@ -14,4 +15,4 @@ const initializeDatabase = async () => {
   }
 };
 
-export { sequelize, Group, UserPrediction, GroupMember, UserProfile, initializeDatabase };
+export { sequelize, Group, UserPrediction, GroupMember, UserProfile, ReminderLog, initializeDatabase };
