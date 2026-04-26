@@ -9,9 +9,9 @@
   --bg-nav: #181818;
 
   /* Brand */
-  --color-accent: #3b5bdb;
-  --color-accent-hover: #4c6ef5;
-  --color-accent-muted: rgba(59, 91, 219, 0.3);
+  --color-accent: #e10600;
+  --color-accent-hover: #ff1e18;
+  --color-accent-muted: rgba(225, 6, 0, 0.3);
 
   /* Semantic */
   --color-success: #22c55e;
@@ -43,11 +43,11 @@
 
   /* Spacing */
   --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-md: 4px;
   --radius-lg: 16px;
 
   /* Focus */
-  --focus-ring: 0 0 0 3px rgba(59, 91, 219, 0.5);
+  --focus-ring: 0 0 0 3px rgba(225, 6, 0, 0.5);
 }
 
 @theme inline {

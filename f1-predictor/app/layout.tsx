@@ -76,7 +76,7 @@ export default function RootLayout({
           appearance={{
             baseTheme: dark,
             variables: {
-              colorPrimary: '#3b5bdb',
+              colorPrimary: '#e10600',
               colorBackground: '#252525',
               colorInputBackground: '#181818',
               colorText: '#f5f5f5',
@@ -90,14 +90,14 @@ export default function RootLayout({
                 border: '1px solid #2d2d2d',
               },
               formButtonPrimary: {
-                backgroundColor: '#3b5bdb',
+                backgroundColor: '#e10600',
                 color: '#ffffff',
               },
               'formButtonPrimary:hover': {
-                backgroundColor: '#4c6ef5',
+                backgroundColor: '#ff1e18',
               },
               footerActionLink: {
-                color: '#3b5bdb',
+                color: '#e10600',
               },
             },
           }}

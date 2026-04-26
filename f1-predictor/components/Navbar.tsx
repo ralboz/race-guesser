@@ -1,15 +1,43 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
-import { HiMenu, HiX } from 'react-icons/hi';
+
+function MenuIcon() {
+    return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+    );
+}
+
+function CloseIcon() {
+    return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+    );
+}
 
 export default function Navbar() {
     const pathname = usePathname();
     const { isLoggedIn, logout } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuHeight, setMenuHeight] = useState(0);
+
+    useEffect(() => {
+        if (mobileMenuOpen && menuRef.current) {
+            setMenuHeight(menuRef.current.scrollHeight);
+        } else {
+            setMenuHeight(0);
+        }
+    }, [mobileMenuOpen]);
 
     const links = isLoggedIn
         ? [
@@ -116,17 +144,22 @@ export default function Navbar() {
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         aria-expanded={mobileMenuOpen}
                     >
-                        {mobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+                        {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
                     </button>
                 </div>
             </div>
 
             {/* Mobile menu */}
-            {mobileMenuOpen && (
-                <div
-                    className="md:hidden flex flex-col px-4 pb-4"
-                    style={{ backgroundColor: 'var(--bg-nav)' }}
-                >
+            <div
+                className="md:hidden overflow-hidden"
+                style={{
+                    maxHeight: menuHeight,
+                    opacity: mobileMenuOpen ? 1 : 0,
+                    transition: 'max-height 0.15s ease, opacity 0.1s ease',
+                    backgroundColor: 'var(--bg-nav)',
+                }}
+            >
+                <div ref={menuRef} className="flex flex-col px-4 pb-4">
                     {links.map((link) => (
                         <Link
                             key={link.href}
@@ -196,7 +229,7 @@ export default function Navbar() {
                         </button>
                     )}
                 </div>
-            )}
+            </div>
         </nav>
     );
 }

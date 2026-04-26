@@ -29,7 +29,7 @@ function formatCountdown(ms: number): string {
 }
 
 // client component used so that the timezone is the actual one of the user not our server.
-export function LocalDate({ iso, className }: { iso: string; className?: string }) {
+export function LocalDate({ iso, className, style }: { iso: string; className?: string; style?: React.CSSProperties }) {
   const target = new Date(iso).getTime();
   const [remaining, setRemaining] = useState<number | null>(null);
 
@@ -52,8 +52,8 @@ export function LocalDate({ iso, className }: { iso: string; className?: string 
   }, [target]);
 
   if (remaining !== null && remaining > 0) {
-    return <p className={className}>🏁 {formatCountdown(remaining)}</p>;
+    return <p className={className} style={style}>🏁 {formatCountdown(remaining)}</p>;
   }
 
-  return <p className={className}>{formatter.format(new Date(iso))}</p>;
+  return <p className={className} style={style}>{formatter.format(new Date(iso))}</p>;
 }
