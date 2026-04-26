@@ -1,5 +1,7 @@
-import { SignUp } from "@clerk/nextjs";
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import AuthSkeleton from "@/components/AuthSkeleton";
+import LazySignUp from "@/components/LazySignUp";
 
 export const metadata: Metadata = {
   title: "Sign Up — Start Predicting F1 Results for Free",
@@ -13,7 +15,9 @@ export const metadata: Metadata = {
 export default function SignUpPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <SignUp />
+      <Suspense fallback={<AuthSkeleton />}>
+        <LazySignUp />
+      </Suspense>
     </div>
   );
 }

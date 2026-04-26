@@ -3,6 +3,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import { AuthProvider } from "@/auth/AuthContext";
 
 const openSans = Open_Sans({
@@ -62,10 +63,45 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://clerk.gridguesser.com" />
+        <link rel="dns-prefetch" href="https://clerk.gridguesser.com" />
+        <link rel="preconnect" href="https://img.clerk.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://img.clerk.com" />
+      </head>
       <body
         className={`${openSans.variable} antialiased`}
       >
-        <ClerkProvider>
+        <ClerkProvider
+          appearance={{
+            baseTheme: dark,
+            variables: {
+              colorPrimary: '#3b5bdb',
+              colorBackground: '#252525',
+              colorInputBackground: '#181818',
+              colorText: '#f5f5f5',
+              colorTextSecondary: '#a0a0a0',
+              colorDanger: '#ef4444',
+              borderRadius: '0.75rem',
+            },
+            elements: {
+              card: {
+                backgroundColor: '#252525',
+                border: '1px solid #2d2d2d',
+              },
+              formButtonPrimary: {
+                backgroundColor: '#3b5bdb',
+                color: '#ffffff',
+              },
+              'formButtonPrimary:hover': {
+                backgroundColor: '#4c6ef5',
+              },
+              footerActionLink: {
+                color: '#3b5bdb',
+              },
+            },
+          }}
+        >
           <AuthProvider>
             <Navbar />
             {children}

@@ -1,5 +1,7 @@
-import { SignIn } from "@clerk/nextjs";
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import AuthSkeleton from "@/components/AuthSkeleton";
+import LazySignIn from "@/components/LazySignIn";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -11,7 +13,9 @@ export const metadata: Metadata = {
 export default function SignInPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <SignIn />
+      <Suspense fallback={<AuthSkeleton />}>
+        <LazySignIn />
+      </Suspense>
     </div>
   );
 }
