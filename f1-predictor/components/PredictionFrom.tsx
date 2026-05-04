@@ -200,14 +200,12 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
                                         </option>
                                     ))}
                                 </select>
+                                {score && score.base_points < 2 && (
+                                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                                        Actual: {score.actual_driver_name}
+                                    </p>
+                                )}
                             </div>
-
-                            {/* hidden for now as layout isnt how i want it when enabled, need to rethink 
-                            {score && (
-                                <span className="text-caption" style={{ color: 'var(--text-secondary)' }}>
-                                    Actual: {score.actual_driver_name}
-                                </span>
-                            )} */}
                         </div>
                     );
                 })}

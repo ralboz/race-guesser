@@ -57,7 +57,7 @@ export default async function Home() {
         if (res.ok) {
             const races: Race[] = await res.json();
             const now = new Date();
-            nextRace = races.find(r => new Date(r.date_start) > now) ?? null;
+            nextRace = races.find(r => new Date(r.date_end) > now) ?? null;
         }
     } catch (e) {
         console.error('Failed to fetch races:', e);
@@ -182,7 +182,7 @@ export default async function Home() {
                                     <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
                                         {nextRace.circuit_short_name} &middot; {nextRace.location}
                                     </p>
-                                    <LocalDate iso={nextRace.fp1_start} className="text-sm text-[var(--text-muted)]" />
+                                    <LocalDate iso={nextRace.fp1_start} className="text-sm text-[var(--text-muted)]" countdownDays={7} />
                                 </div>
 
                                 <div className="shrink-0">

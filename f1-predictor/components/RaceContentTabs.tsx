@@ -8,6 +8,7 @@ import ScoreSummary from '@/components/ScoreSummary';
 import MiniLeaderboard from '@/components/MiniLeaderboard';
 import PredictionWindowBanner from '@/components/PredictionWindowBanner';
 import SubmissionTracker from '@/components/SubmissionTracker';
+import MemberPredictionStatus from '@/components/MemberPredictionStatus';
 import { PredictionWindowStatus } from '@/app/race/[raceId]/page';
 import type { SubmissionCount } from '@/app/race/[raceId]/page';
 
@@ -91,6 +92,9 @@ export default function RaceContentTabs({
                         </div>
                         <div className="pt-3 px-6">
                             <SubmissionTracker submissionCount={submissionCount} windowStatus={windowStatus} />
+                        </div>
+                        <div className="pt-3 px-6">
+                            <MemberPredictionStatus raceId={raceId} />
                         </div>
                         {!predictionStatus.submitted && (
                             <PredictionsForm raceId={raceId} windowDisabled={windowDisabled} />

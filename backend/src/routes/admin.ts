@@ -115,6 +115,46 @@ router.patch('/password', adminMutationLimiter, async (req: Request, res: Respon
   }
 });
 
+// Get member prediction status for a specific race
+router.get('/member-status/:raceId', async (req: Request, res: Response) => {
+  try {
+    const group = (req as any).group as Group;
+    const { raceId } = req.params;
+
+    // Get all members + owner
+    const members = await GroupMember.findAll({
+      where: { group_id: group.id },
+      order: [['created_at', 'ASC']],
+    });
+    const allUserIds = [group.owner_id, ...members.map(m => m.user_id)];
+
+    // Get display names
+    const profiles = await UserProfile.findAll({ where: { user_id: allUserIds } });
+    const profileMap = new Map(profiles.map(p => [p.user_id, p.display_name]));
+
+    // Get users who have submitted predictions for this race
+    const submitted = await UserPrediction.findAll({
+      attributes: ['user_id'],
+      where: { group_id: group.id, race_identifier: raceId },
+      group: ['user_id'],
+      raw: true,
+    });
+    const submittedSet = new Set(submitted.map((r: any) => r.user_id));
+
+    const result = allUserIds.map(uid => ({
+      user_id: uid,
+      display_name: profileMap.get(uid) ?? uid,
+      has_predicted: submittedSet.has(uid),
+      is_owner: uid === group.owner_id,
+    }));
+
+    res.json({ members: result });
+  } catch (error) {
+    console.error('Error fetching member status:', error);
+    res.status(500).json({ message: 'Error fetching member status' });
+  }
+});
+
 // Check reminder status for a race
 router.get('/reminder-status/:raceId', async (req: Request, res: Response) => {
   try {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const FOUR_DAYS_MS = 4 * 24 * 60 * 60 * 1000;
+const DEFAULT_COUNTDOWN_DAYS = 4;
 
 const formatter = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',
@@ -29,13 +29,14 @@ function formatCountdown(ms: number): string {
 }
 
 // client component used so that the timezone is the actual one of the user not our server.
-export function LocalDate({ iso, className, style }: { iso: string; className?: string; style?: React.CSSProperties }) {
+export function LocalDate({ iso, className, style, countdownDays }: { iso: string; className?: string; style?: React.CSSProperties; countdownDays?: number }) {
+  const thresholdMs = (countdownDays ?? DEFAULT_COUNTDOWN_DAYS) * 24 * 60 * 60 * 1000;
   const target = new Date(iso).getTime();
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     const diff = target - Date.now();
-    if (diff <= 0 || diff > FOUR_DAYS_MS) return;
+    if (diff <= 0 || diff > thresholdMs) return;
 
     setRemaining(diff);
     const interval = setInterval(() => {
@@ -49,7 +50,7 @@ export function LocalDate({ iso, className, style }: { iso: string; className?: 
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [target]);
+  }, [target, thresholdMs]);
 
   if (remaining !== null && remaining > 0) {
     return <p className={className} style={style}>🏁 {formatCountdown(remaining)}</p>;

@@ -11,7 +11,6 @@ type TiltCardProps = {
 
 export default function TiltCard({ children, className = '', style, accentLine = false }: TiltCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
-    const glowRef = useRef<HTMLDivElement>(null);
     const rafId = useRef(0);
     const hovering = useRef(false);
 
@@ -32,11 +31,7 @@ export default function TiltCard({ children, className = '', style, accentLine =
                 el.style.transition = 'none';
                 el.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
 
-                const glow = glowRef.current;
-                if (glow) {
-                    glow.style.opacity = '1';
-                    glow.style.background = `radial-gradient(circle 75px at ${x * 100}% ${y * 100}%, rgba(59,91,219,0.12) 0%, transparent 70%)`;
-                }
+
             });
         };
 
@@ -47,8 +42,7 @@ export default function TiltCard({ children, className = '', style, accentLine =
             cancelAnimationFrame(rafId.current);
             el.style.transition = 'transform 0.4s ease-out';
             el.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
-            const glow = glowRef.current;
-            if (glow) glow.style.opacity = '0';
+
         };
 
         el.addEventListener('mousemove', onMove);
@@ -87,16 +81,6 @@ export default function TiltCard({ children, className = '', style, accentLine =
                     }}
                 />
             )}
-            <div
-                ref={glowRef}
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                }}
-            />
             <div style={{ position: 'relative' }}>{children}</div>
         </div>
     );
