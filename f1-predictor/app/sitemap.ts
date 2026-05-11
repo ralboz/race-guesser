@@ -1,6 +1,16 @@
 import type { MetadataRoute } from "next";
+import { getAllSlugs } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const slugs = getAllSlugs();
+
+  const blogEntries: MetadataRoute.Sitemap = slugs.map((slug) => ({
+    url: `https://gridguesser.com/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
   return [
     {
       url: "https://gridguesser.com",
@@ -32,5 +42,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    {
+      url: "https://gridguesser.com/blog",
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    ...blogEntries,
   ];
 }

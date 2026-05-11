@@ -12,8 +12,11 @@
   "dependencies": {
     "@clerk/nextjs": "^6.21.0",
     "@clerk/themes": "^2.4.57",
+    "@tailwindcss/typography": "^0.5.19",
     "axios": "^1.13.4",
+    "gray-matter": "^4.0.3",
     "next": "^16.1.6",
+    "next-mdx-remote": "^6.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-icons": "^5.5.0"

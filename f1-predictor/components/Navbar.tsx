@@ -45,11 +45,13 @@ export default function Navbar() {
               { href: '/groups', name: 'Groups' },
               { href: '/leader-board', name: 'Leaderboard' },
               { href: '/global-leaderboard', name: 'Global Rankings' },
+              { href: '/blog', name: 'Blog' },
           ]
         : [
               { href: '/', name: 'Home' },
               { href: '/groups', name: 'Groups' },
               { href: '/global-leaderboard', name: 'Global Rankings' },
+              { href: '/blog', name: 'Blog' },
           ];
 
     const handleLogout = () => {
