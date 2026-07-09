@@ -8,6 +8,7 @@ import GroupMember from '../models/GroupMember';
 import UserProfile from '../models/UserProfile';
 import PredictionScore from '../models/PredictionScore';
 import { obfuscateName } from '../utils/obfuscateName';
+import { verifyUnsubscribeToken } from '../services/resultsNotificationService';
 
 const router = express.Router();
 
@@ -231,5 +232,62 @@ router.get('/leaderboard/global', async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Failed to fetch global leaderboard' });
   }
 });
+
+// One-click unsubscribe from results emails (no login required)
+router.get('/unsubscribe-results', async (req: Request, res: Response) => {
+  try {
+    const userId = req.query.userId as string;
+    const token = req.query.token as string;
+
+    if (!userId || !token) {
+      return res.status(400).send(unsubscribePage('Invalid unsubscribe link.', false));
+    }
+
+    // Verify HMAC token
+    let valid = false;
+    try {
+      valid = verifyUnsubscribeToken(userId, token);
+    } catch {
+      valid = false;
+    }
+
+    if (!valid) {
+      return res.status(403).send(unsubscribePage('This unsubscribe link is invalid or has been tampered with.', false));
+    }
+
+    // Opt the user out
+    const [affectedRows] = await UserProfile.update(
+      { results_email_opt_out: true },
+      { where: { user_id: userId } }
+    );
+
+    if (affectedRows === 0) {
+      return res.status(404).send(unsubscribePage('Account not found.', false));
+    }
+
+    return res.send(unsubscribePage("You've been unsubscribed from results emails. You won't receive these anymore.", true));
+  } catch (error) {
+    console.error('Error processing unsubscribe:', error);
+    return res.status(500).send(unsubscribePage('Something went wrong. Please try again later.', false));
+  }
+});
+
+function unsubscribePage(message: string, success: boolean): string {
+  const icon = success ? '✓' : '✗';
+  const color = success ? '#22c55e' : '#ef4444';
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unsubscribe - Grid Guesser</title></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f8f9fa;">
+      <div style="text-align: center; padding: 40px; max-width: 400px;">
+        <div style="font-size: 48px; color: ${color}; margin-bottom: 16px;">${icon}</div>
+        <p style="font-size: 16px; color: #333;">${message}</p>
+        <a href="https://gridguesser.com" style="color: #3b5bdb; text-decoration: none; font-size: 14px;">Back to Grid Guesser</a>
+      </div>
+    </body>
+    </html>
+  `;
+}
 
 export default router;

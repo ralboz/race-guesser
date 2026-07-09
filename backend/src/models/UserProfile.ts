@@ -5,6 +5,7 @@ interface UserProfileAttributes {
   user_id: string;
   display_name: string;
   email_notifications: boolean;
+  results_email_opt_out: boolean;
   updated_at: Date;
 }
 
@@ -12,6 +13,7 @@ interface UserProfileCreationAttributes {
   user_id: string;
   display_name: string;
   email_notifications?: boolean;
+  results_email_opt_out?: boolean;
   updated_at?: Date;
 }
 
@@ -19,6 +21,7 @@ class UserProfile extends Model<UserProfileAttributes, UserProfileCreationAttrib
   public user_id!: string;
   public display_name!: string;
   public email_notifications!: boolean;
+  public results_email_opt_out!: boolean;
   public updated_at!: Date;
 }
 
@@ -34,6 +37,11 @@ UserProfile.init(
       allowNull: false
     },
     email_notifications: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    results_email_opt_out: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false

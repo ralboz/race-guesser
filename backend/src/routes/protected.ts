@@ -614,7 +614,10 @@ router.get('/notification-preference', async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const profile = await UserProfile.findByPk(userId);
-    res.json({ email_notifications: profile?.email_notifications ?? false });
+    res.json({
+      email_notifications: profile?.email_notifications ?? false,
+      results_email_opt_out: profile?.results_email_opt_out ?? false,
+    });
   } catch (error) {
     console.error('Error fetching notification preference:', error);
     res.status(500).json({ message: 'Error fetching notification preference' });
@@ -626,17 +629,28 @@ router.patch('/notification-preference', mutationLimiter, async (req: Request, r
     const userId = getAuth(req).userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    const { email_notifications } = req.body;
-    if (typeof email_notifications !== 'boolean') {
-      return res.status(400).json({ message: 'email_notifications must be a boolean' });
+    const { email_notifications, results_email_opt_out } = req.body;
+
+    const updates: Partial<{ email_notifications: boolean; results_email_opt_out: boolean }> = {};
+
+    if (typeof email_notifications === 'boolean') {
+      updates.email_notifications = email_notifications;
+    }
+    if (typeof results_email_opt_out === 'boolean') {
+      updates.results_email_opt_out = results_email_opt_out;
     }
 
-    const [affectedRows] = await UserProfile.update(
-      { email_notifications },
-      { where: { user_id: userId } }
-    );
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'No valid preference fields provided' });
+    }
 
-    res.json({ email_notifications });
+    await UserProfile.update(updates, { where: { user_id: userId } });
+
+    const profile = await UserProfile.findByPk(userId);
+    res.json({
+      email_notifications: profile?.email_notifications ?? false,
+      results_email_opt_out: profile?.results_email_opt_out ?? false,
+    });
   } catch (error) {
     console.error('Error updating notification preference:', error);
     res.status(500).json({ message: 'Error updating notification preference' });

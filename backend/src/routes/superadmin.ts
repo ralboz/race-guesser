@@ -18,6 +18,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 import { scorePrediction, PositionType } from '../scoring/scorePrediction';
 import { aggregateScores } from '../scoring/aggregateScores';
+import { sendResultsNotifications } from '../services/resultsNotificationService';
 
 const RACE_POSITION_TYPES: PositionType[] = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10'];
 
@@ -237,6 +238,20 @@ router.post<{ raceId: string }>('/calculate-points/:raceId', async (req: Request
         });
 
         await t.commit();
+
+        // Fire results notification emails in the background
+        const scoredUsers = userRaceScoreRows.map(r => ({
+          user_id: r.user_id,
+          total_points: r.total_points,
+          exact_hits: r.exact_hits,
+          near_hits: r.near_hits,
+          unique_correct_hits: r.unique_correct_hits,
+        }));
+
+        // Don't await — send emails asynchronously so the admin gets a fast response
+        sendResultsNotifications(raceId, scoredUsers).catch(err => {
+          console.error('[results-notify] Background send failed:', err);
+        });
 
         return res.json({
             ok: true,
@@ -459,6 +474,33 @@ router.post<{ raceId: string }>('/notify-admins/:raceId', async (req: Request<{ 
         });
     } catch (err: any) {
         console.error('Notify admins error:', err);
+        return res.status(500).json({ error: err?.message ?? 'Unknown error' });
+    }
+});
+
+// Test results email — sends only to the requesting admin with fake score data
+router.post<{ raceId: string }>('/test-results-email/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
+    const { userId } = getAuth(req);
+    const adminIds = (process.env.ADMIN_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!userId || !adminIds.includes(userId)) return res.sendStatus(403);
+
+    const raceId = req.params.raceId;
+    const race = getRaceById(raceId);
+    if (!race) return res.status(404).json({ error: 'Race not found' });
+
+    // Send to just the requesting admin with sample score data
+    const fakeScore = {
+        user_id: userId,
+        total_points: 8,
+        exact_hits: 2,
+        near_hits: 3,
+        unique_correct_hits: 1,
+    };
+
+    try {
+        const result = await sendResultsNotifications(raceId, [fakeScore]);
+        return res.json({ ok: true, ...result });
+    } catch (err: any) {
         return res.status(500).json({ error: err?.message ?? 'Unknown error' });
     }
 });
