@@ -478,31 +478,4 @@ router.post<{ raceId: string }>('/notify-admins/:raceId', async (req: Request<{ 
     }
 });
 
-// Test results email — sends only to the requesting admin with fake score data
-router.post<{ raceId: string }>('/test-results-email/:raceId', async (req: Request<{ raceId: string }>, res: Response) => {
-    const { userId } = getAuth(req);
-    const adminIds = (process.env.ADMIN_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
-    if (!userId || !adminIds.includes(userId)) return res.sendStatus(403);
-
-    const raceId = req.params.raceId;
-    const race = getRaceById(raceId);
-    if (!race) return res.status(404).json({ error: 'Race not found' });
-
-    // Send to just the requesting admin with sample score data
-    const fakeScore = {
-        user_id: userId,
-        total_points: 8,
-        exact_hits: 2,
-        near_hits: 3,
-        unique_correct_hits: 1,
-    };
-
-    try {
-        const result = await sendResultsNotifications(raceId, [fakeScore]);
-        return res.json({ ok: true, ...result });
-    } catch (err: any) {
-        return res.status(500).json({ error: err?.message ?? 'Unknown error' });
-    }
-});
-
 export default router;

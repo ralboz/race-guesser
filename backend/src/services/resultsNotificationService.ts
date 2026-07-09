@@ -118,22 +118,58 @@ export async function sendResultsNotifications(
         to: email,
         subject: `Results are in! ${race.meeting_name} 🏁`,
         html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-            <p>Hey ${displayName},</p>
-            <p>The results for the <strong>${race.meeting_name}</strong> have been posted and your scores are ready.</p>
-            <p style="font-size: 16px; margin: 20px 0; padding: 16px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3b5bdb;">
-              ${teaser}
-            </p>
-            <p style="margin: 24px 0;">
-              <a href="${resultsUrl}" style="background-color: #3b5bdb; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                View My Results
-              </a>
-            </p>
-            <p style="color: #888; font-size: 13px; margin-top: 32px; border-top: 1px solid #eee; padding-top: 16px;">
-              You're receiving this because you have an account on Grid Guesser.<br/>
-              <a href="${unsubscribeUrl}" style="color: #888;">Unsubscribe from results emails</a>
-            </p>
-          </div>
+          <!DOCTYPE html>
+          <html>
+          <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+          <body style="margin: 0; padding: 0; background-color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a2e; padding: 32px 16px;">
+              <tr>
+                <td align="center">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.15);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 32px 24px; text-align: center;">
+                        <p style="margin: 0 0 8px 0; font-size: 14px; color: #a0aec0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Race Results</p>
+                        <h1 style="margin: 0; font-size: 22px; color: #ffffff; font-weight: 700;">${race.meeting_name}</h1>
+                        <p style="margin: 8px 0 0 0; font-size: 32px;">🏁</p>
+                      </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding: 32px 24px;">
+                        <p style="margin: 0 0 20px 0; font-size: 15px; color: #333; line-height: 1.5;">Hey ${displayName},</p>
+                        <p style="margin: 0 0 24px 0; font-size: 15px; color: #333; line-height: 1.5;">The results have been posted and your scores are ready.</p>
+                        <!-- Teaser card -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0;">
+                          <tr>
+                            <td style="background-color: #f7f8fc; border-radius: 10px; padding: 20px 24px; border: 1px solid #e8ecf4;">
+                              <p style="margin: 0; font-size: 15px; color: #2d3748; line-height: 1.6;">${teaser}</p>
+                            </td>
+                          </tr>
+                        </table>
+                        <!-- CTA Button -->
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center">
+                              <a href="${resultsUrl}" style="display: inline-block; background-color: #3b5bdb; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">View My Results →</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                      <td style="padding: 20px 24px; border-top: 1px solid #f0f0f0; text-align: center;">
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #a0aec0;">You're receiving this because you have an account on Grid Guesser.</p>
+                        <a href="${unsubscribeUrl}" style="font-size: 12px; color: #a0aec0; text-decoration: underline;">Unsubscribe from results emails</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
         `,
       });
       sent++;
