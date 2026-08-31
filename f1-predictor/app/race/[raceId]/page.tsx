@@ -1,5 +1,5 @@
 import RaceContentTabs, {PredictionCheckResponse} from "@/components/RaceContentTabs";
-import {Race, ScoresResponse, LeaderboardEntry} from "@/libs/types";
+import {Race, ScoresResponse, LeaderboardEntry, GroupPredictionsResponse} from "@/libs/types";
 import Image from "next/image";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
@@ -98,6 +98,19 @@ async function fetchLeaderboard(raceId: string, token: string): Promise<Leaderbo
     }
 }
 
+async function fetchGroupPredictions(raceId: string, token: string): Promise<GroupPredictionsResponse | null> {
+    try {
+        const res = await fetch(`${API_URL}/protected/group-predictions/${raceId}`, {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
+
 async function fetchPredictionWindow(raceId: string): Promise<PredictionWindowStatus | null> {
     const token = await getAuthToken();
     if (!token) return null;
@@ -145,17 +158,19 @@ export default async function SpecificRace({ params }: Props) {
     const authObj = await auth();
     const currentUserId = authObj.userId ?? "";
 
-    // Fetch scores and leaderboard if the user has submitted predictions
+    // Fetch scores, leaderboard, and group predictions if the user has submitted.
     let scoresResponse: ScoresResponse | null = null;
     let leaderboardResponse: LeaderboardResponse | null = null;
+    let groupPredictions: GroupPredictionsResponse | null = null;
 
     if (predictionStatus.submitted) {
         const token = await getAuthToken();
 
         if (token) {
-            [scoresResponse, leaderboardResponse] = await Promise.all([
+            [scoresResponse, leaderboardResponse, groupPredictions] = await Promise.all([
                 fetchScores(raceId, token),
                 fetchLeaderboard(raceId, token),
+                fetchGroupPredictions(raceId, token),
             ]);
         }
     }
@@ -186,6 +201,7 @@ export default async function SpecificRace({ params }: Props) {
                 hasResults={hasResults}
                 scoresResponse={scoresResponse}
                 leaderboard={leaderboardResponse?.leaderboard ?? []}
+                groupPredictions={groupPredictions}
                 currentUserId={currentUserId}
                 windowStatus={windowStatus}
                 submissionCount={submissionCount}

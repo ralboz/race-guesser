@@ -298,23 +298,109 @@ router.post('/join-group', joinGroupLimiter, async (req: Request, res: Response)
   }
 });
 
-// Get predictions for a race in a group
-router.get('/predictions/:groupId/:raceId', async (req: Request, res: Response) => {
+// Get all group members predictions for a race
+router.get('/group-predictions/:raceId', async (req: Request, res: Response) => {
   try {
-    const { groupId, raceId } = req.params;
+    const userId = getAuth(req).userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
+    const { raceId } = req.params;
+
+    const group_id = await getUserGroupId(userId);
+    if (group_id === null) {
+      return res.status(403).json({ message: 'User must be a member of a group', code: 'NO_GROUP' });
+    }
+
+    // Anti-cheat gate: caller must have submitted a full prediction
+    const callerPredictionCount = await UserPrediction.count({
+      where: { user_id: userId, race_identifier: raceId, group_id },
+    });
+    if (callerPredictionCount < 11) {
+      return res.status(403).json({
+        message: 'Submit your own prediction to view group predictions',
+        code: 'NOT_SUBMITTED',
+      });
+    }
+
+    // Enumerate all members of the group (owner + members).
+    const group = await Group.findByPk(group_id);
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+    const memberRows = await GroupMember.findAll({ where: { group_id } });
+    const allUserIds = [group.owner_id, ...memberRows.map(m => m.user_id)];
+
+    // Display names in full (private group page)
+    const profiles = await UserProfile.findAll({ where: { user_id: allUserIds } });
+    const profileMap = new Map(profiles.map(p => [p.user_id, p.display_name]));
+
+    // All predictions for this group + race.
     const predictions = await UserPrediction.findAll({
-      where: {
-        group_id: groupId,
-        race_identifier: raceId
-      },
-      include: [Group]
+      where: { group_id, race_identifier: raceId },
+    });
+    const predsByUser = new Map<string, Record<string, string>>();
+    for (const p of predictions) {
+      let entry = predsByUser.get(p.user_id);
+      if (!entry) {
+        entry = {};
+        predsByUser.set(p.user_id, entry);
+      }
+      entry[p.position_type] = p.driver_name;
+    }
+
+    // Scores (only present once race results are in)
+    const scores = await PredictionScore.findAll({
+      where: { group_id, race_identifier: raceId },
+    });
+    const hasResults = scores.length > 0;
+    const scoresByUser = new Map<string, Record<string, { base_points: number; unique_correct: boolean }>>();
+    const actual: Record<string, string> = {};
+    for (const s of scores) {
+      let entry = scoresByUser.get(s.user_id);
+      if (!entry) {
+        entry = {};
+        scoresByUser.set(s.user_id, entry);
+      }
+      entry[s.position_type] = { base_points: s.base_points, unique_correct: s.unique_correct };
+      actual[s.position_type] = s.actual_driver_name;
+    }
+
+    const POSITION_TYPES = ['pole', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10'] as const;
+
+    const members = allUserIds.map(uid => {
+      const userPreds = predsByUser.get(uid);
+      const submitted = !!userPreds && POSITION_TYPES.every(pt => userPreds[pt]);
+      const userScores = scoresByUser.get(uid);
+
+      const predictionsOut = submitted
+        ? POSITION_TYPES.reduce((acc, pt) => {
+            acc[pt] = {
+              driver_name: userPreds![pt],
+              base_points: userScores?.[pt]?.base_points ?? null,
+              unique_correct: userScores?.[pt]?.unique_correct ?? false,
+            };
+            return acc;
+          }, {} as Record<string, { driver_name: string; base_points: number | null; unique_correct: boolean }>)
+        : null;
+
+      return {
+        user_id: uid,
+        display_name: profileMap.get(uid) ?? uid,
+        is_current_user: uid === userId,
+        is_owner: uid === group.owner_id,
+        submitted,
+        predictions: predictionsOut,
+      };
     });
 
-    res.json({ predictions });
+    res.json({
+      hasResults,
+      actual: hasResults ? actual : null,
+      members,
+    });
   } catch (error) {
-    console.error('Error fetching predictions:', error);
-    res.status(500).json({ message: 'Error fetching predictions' });
+    console.error('Error fetching group predictions:', error);
+    res.status(500).json({ message: 'Error fetching group predictions' });
   }
 });
 

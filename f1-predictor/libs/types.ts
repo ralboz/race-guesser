@@ -35,8 +35,11 @@ export interface GroupOwner {
     display_name: string;
 }
 
+export type PositionType =
+    | 'pole' | 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6' | 'p7' | 'p8' | 'p9' | 'p10';
+
 export interface PositionScore {
-    position_type: string;
+    position_type: PositionType;
     predicted_driver_name: string;
     actual_driver_name: string;
     base_points: number;
@@ -88,4 +91,26 @@ export interface GlobalLeaderboardEntry {
     exact_hits: number;
     near_hits: number;
     rank: number;
+}
+
+export interface GroupPredictionCell {
+    driver_name: string;
+    base_points: number | null; // null before results are in
+    unique_correct: boolean;
+}
+
+export interface GroupPredictionMember {
+    user_id: string;
+    display_name: string;
+    is_current_user: boolean;
+    is_owner: boolean;
+    submitted: boolean;
+    // null when the member has not submitted a full prediction yet
+    predictions: Record<PositionType, GroupPredictionCell> | null;
+}
+
+export interface GroupPredictionsResponse {
+    hasResults: boolean;
+    actual: Record<PositionType, string> | null;
+    members: GroupPredictionMember[];
 }

@@ -4,15 +4,10 @@ import {DRIVERS_2026} from "@/libs/consts";
 import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
 import { API_URL } from "@/libs/api";
-import { PositionScore } from "@/libs/types";
+import { PositionScore, PositionType } from "@/libs/types";
 
 
-export interface PredictionFormData {
-    pole: string;
-    p1: string; p2: string; p3: string; p4: string;
-    p5: string; p6: string; p7: string; p8: string;
-    p9: string; p10: string;
-}
+export type PredictionFormData = Record<PositionType, string>;
 
 const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'Pole'];
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ScoresResponse, LeaderboardEntry } from '@/libs/types';
+import { ScoresResponse, LeaderboardEntry, GroupPredictionsResponse } from '@/libs/types';
 import { PredictionFormData } from '@/components/PredictionFrom';
 import PredictionsForm from '@/components/PredictionFrom';
 import ScoreSummary from '@/components/ScoreSummary';
 import MiniLeaderboard from '@/components/MiniLeaderboard';
+import GroupPredictionsTable from '@/components/GroupPredictionsTable';
 import PredictionWindowBanner from '@/components/PredictionWindowBanner';
 import SubmissionTracker from '@/components/SubmissionTracker';
 import MemberPredictionStatus from '@/components/MemberPredictionStatus';
@@ -18,7 +19,7 @@ export interface PredictionCheckResponse {
     group_id?: number;
 }
 
-type TabId = 'predictions' | 'leaderboard';
+type TabId = 'predictions' | 'group-predictions' | 'leaderboard';
 
 type RaceContentTabsProps = {
     raceId: string;
@@ -26,6 +27,7 @@ type RaceContentTabsProps = {
     hasResults: boolean;
     scoresResponse: ScoresResponse | null;
     leaderboard: LeaderboardEntry[];
+    groupPredictions: GroupPredictionsResponse | null;
     currentUserId: string;
     windowStatus: PredictionWindowStatus | null;
     submissionCount: SubmissionCount | null;
@@ -37,6 +39,7 @@ export default function RaceContentTabs({
     hasResults,
     scoresResponse,
     leaderboard,
+    groupPredictions,
     currentUserId,
     windowStatus,
     submissionCount,
@@ -46,6 +49,7 @@ export default function RaceContentTabs({
 
     const tabs: { id: TabId; label: string }[] = [
         { id: 'predictions', label: 'My Predictions' },
+        { id: 'group-predictions', label: 'Group Predictions' },
         { id: 'leaderboard', label: 'Group Leaderboard' },
     ];
 
@@ -121,6 +125,30 @@ export default function RaceContentTabs({
                                     scoreData={scoresResponse!.scores}
                                 />
                             </div>
+                        )}
+                    </div>
+                )}
+                {activeTab === 'group-predictions' && (
+                    <div className="mt-2 px-4 sm:px-6 pb-4">
+                        {!predictionStatus.submitted ? (
+                            <div
+                                className="mt-3 rounded-lg p-6 text-center"
+                                style={{
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    borderRadius: 'var(--radius-lg)',
+                                }}
+                            >
+                                <p className="text-body font-medium" style={{ color: 'var(--text-primary)' }}>
+                                    Locked until you predict
+                                </p>
+                                <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                                    Lock in your own picks first, then you can see what the rest of your group guessed.
+                                </p>
+                            </div>
+                        ) : groupPredictions ? (
+                            <GroupPredictionsTable data={groupPredictions} />
+                        ) : (
+                            <p className="mt-3">No group predictions available for this race.</p>
                         )}
                     </div>
                 )}
