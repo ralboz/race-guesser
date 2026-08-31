@@ -43,7 +43,7 @@ export default function GroupPredictionsTable({ data }: Props) {
     }
 
     return (
-        <div className="mt-2 w-full">
+        <div className="w-full">
             {hasResults && (
                 <div
                     className="flex flex-wrap items-center gap-3 mb-3 text-xs"
@@ -62,32 +62,31 @@ export default function GroupPredictionsTable({ data }: Props) {
                 </div>
             )}
 
-            <div className="w-full overflow-x-auto" style={{ borderRadius: 'var(--radius-lg)' }}>
-                <div
-                    style={{
-                        backgroundColor: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-lg)',
-                        overflow: 'hidden',
-                    }}
-                >
-                    <table className="w-full text-sm border-collapse">
+            <div
+                className="w-full overflow-x-auto"
+                style={{ borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-secondary)' }}
+            >
+                <table className="min-w-full w-max text-sm border-separate" style={{ borderSpacing: 0 }}>
                         <thead>
-                            <tr
-                                className="text-xs"
-                                style={{
-                                    color: 'var(--text-muted)',
-                                    borderBottom: '1px solid var(--bg-elevated)',
-                                }}
-                            >
+                            <tr className="text-xs" style={{ color: 'var(--text-muted)' }}>
                                 <th
                                     scope="col"
                                     className="px-3 py-2 text-left font-medium sticky left-0 z-10"
-                                    style={{ backgroundColor: 'var(--bg-secondary)' }}
+                                    style={{
+                                        backgroundColor: 'var(--bg-secondary)',
+                                        borderRight: '1px solid var(--bg-elevated)',
+                                        borderBottom: '1px solid var(--bg-elevated)',
+                                    }}
                                 >
                                     Member
                                 </th>
                                 {COLUMNS.map((c) => (
-                                    <th key={c.key} scope="col" className="px-2 py-2 text-center font-medium">
+                                    <th
+                                        key={c.key}
+                                        scope="col"
+                                        className="px-3 py-2 text-center font-medium whitespace-nowrap"
+                                        style={{ borderBottom: '1px solid var(--bg-elevated)' }}
+                                    >
                                         {c.label}
                                     </th>
                                 ))}
@@ -95,18 +94,15 @@ export default function GroupPredictionsTable({ data }: Props) {
                         </thead>
                         <tbody>
                             {hasResults && actual && (
-                                <tr
-                                    style={{
-                                        borderBottom: '1px solid var(--bg-elevated)',
-                                        backgroundColor: 'var(--bg-surface)',
-                                    }}
-                                >
+                                <tr style={{ backgroundColor: 'var(--bg-surface)' }}>
                                     <th
                                         scope="row"
                                         className="px-3 py-2 text-left font-semibold sticky left-0 z-10"
                                         style={{
                                             color: 'var(--text-primary)',
                                             backgroundColor: 'var(--bg-surface)',
+                                            borderRight: '1px solid var(--bg-elevated)',
+                                            borderBottom: '1px solid var(--bg-elevated)',
                                         }}
                                     >
                                         Actual
@@ -114,8 +110,11 @@ export default function GroupPredictionsTable({ data }: Props) {
                                     {COLUMNS.map((c) => (
                                         <td
                                             key={c.key}
-                                            className="px-2 py-2 text-center font-semibold"
-                                            style={{ color: 'var(--text-primary)' }}
+                                            className="px-3 py-2 text-center font-semibold whitespace-nowrap"
+                                            style={{
+                                                color: 'var(--text-primary)',
+                                                borderBottom: '1px solid var(--bg-elevated)',
+                                            }}
                                             title={actual[c.key]}
                                         >
                                             {driverCode(actual[c.key])}
@@ -140,9 +139,11 @@ export default function GroupPredictionsTable({ data }: Props) {
                                         className="px-3 py-2 text-left font-normal sticky left-0 z-10 whitespace-nowrap"
                                         style={{
                                             color: 'var(--text-primary)',
-                                            backgroundColor: m.is_current_user
-                                                ? 'var(--color-accent-muted)'
-                                                : 'var(--bg-secondary)',
+                                            backgroundColor: 'var(--bg-secondary)',
+                                            backgroundImage: m.is_current_user
+                                                ? 'linear-gradient(var(--color-accent-muted), var(--color-accent-muted))'
+                                                : undefined,
+                                            borderRight: '1px solid var(--bg-elevated)',
                                             fontWeight: m.is_current_user ? 600 : 400,
                                         }}
                                     >
@@ -162,7 +163,7 @@ export default function GroupPredictionsTable({ data }: Props) {
                                         return (
                                             <td
                                                 key={c.key}
-                                                className={`px-2 py-2 text-center ${meta.className}`}
+                                                className={`px-3 py-2 text-center whitespace-nowrap ${meta.className}`}
                                                 title={title}
                                             >
                                                 {cell ? driverCode(cell.driver_name) : '—'}
@@ -183,6 +184,7 @@ export default function GroupPredictionsTable({ data }: Props) {
                                         style={{
                                             color: 'var(--text-muted)',
                                             backgroundColor: 'var(--bg-secondary)',
+                                            borderRight: '1px solid var(--bg-elevated)',
                                         }}
                                     >
                                         {m.display_name}
@@ -202,8 +204,7 @@ export default function GroupPredictionsTable({ data }: Props) {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
-                </div>
+                </table>
             </div>
         </div>
     );

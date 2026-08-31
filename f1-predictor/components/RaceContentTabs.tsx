@@ -129,8 +129,8 @@ export default function RaceContentTabs({
                     </div>
                 )}
                 {activeTab === 'group-predictions' && (
-                    <div className="mt-2 px-4 sm:px-6 pb-4">
-                        {!predictionStatus.submitted ? (
+                    !predictionStatus.submitted ? (
+                        <div className="mt-2 px-4 sm:px-6 pb-4">
                             <div
                                 className="mt-3 rounded-lg p-6 text-center"
                                 style={{
@@ -145,12 +145,18 @@ export default function RaceContentTabs({
                                     Lock in your own picks first, then you can see what the rest of your group guessed.
                                 </p>
                             </div>
-                        ) : groupPredictions ? (
-                            <GroupPredictionsTable data={groupPredictions} />
-                        ) : (
+                        </div>
+                    ) : groupPredictions ? (
+                        <div className="mt-2 pb-4 relative left-1/2 w-screen -translate-x-1/2 px-4 sm:px-6">
+                            <div className="mx-auto max-w-[1100px]">
+                                <GroupPredictionsTable data={groupPredictions} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-2 px-4 sm:px-6 pb-4">
                             <p className="mt-3">No group predictions available for this race.</p>
-                        )}
-                    </div>
+                        </div>
+                    )
                 )}
                 {activeTab === 'leaderboard' && (
                     <div className="mt-2">
