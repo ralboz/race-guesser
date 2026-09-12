@@ -1,48 +1,19 @@
-import { Group, Race, PublicGroupInfo } from "@/libs/types";
-import { CopyButton } from "@/components/CopyButton";
+import { Race, PublicGroupInfo } from "@/libs/types";
 import { NoGroupSection } from "@/components/NoGroupSection";
 import { PublicGroupList } from "@/components/PublicGroupList";
 import { RaceList } from "@/components/RaceList";
-import { NotificationToggle } from "@/components/NotificationToggle";
 import Link from "next/link";
 
 interface GroupsPageContentProps {
     isSignedIn: boolean;
-    userGroup: Group | null;
     publicGroups: PublicGroupInfo[];
     upcomingRaces: Race[];
     pastRaces: Race[];
 }
 
-export function GroupsPageContent({ isSignedIn, userGroup, publicGroups, upcomingRaces, pastRaces }: GroupsPageContentProps) {
-    // Signed in user in a group
-    if (isSignedIn && userGroup) {
-        return (
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <h1 className="text-3xl">{userGroup.groupName}</h1>
-                <div className="flex flex-row items-center gap-2.5 mb-2">
-                    <p className="text-2xl opacity-80">#{userGroup.groupId}</p>
-                    <CopyButton text={userGroup.groupId} />
-                    <span className="text-sm opacity-60">•</span>
-                    <p className="text-sm opacity-60">{userGroup.memberCount} {userGroup.memberCount === 1 ? 'member' : 'members'}</p>
-                </div>
-                {userGroup.isOwner && (
-                    <div className="mb-8">
-                        <div className="flex items-center gap-4">
-                            <Link href="/groups/manage" className="btn btn-secondary text-sm">
-                                Manage Group
-                            </Link>
-                        </div>
-                    </div>
-                )}
-                {!userGroup.isOwner && <NotificationToggle />}
-                <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} isOwner={!!userGroup.isOwner} />
-            </div>
-        );
-    }
-
+export function GroupsPageContent({ isSignedIn, publicGroups, upcomingRaces, pastRaces }: GroupsPageContentProps) {
     // Signed in user without a group
-    if (isSignedIn && !userGroup) {
+    if (isSignedIn) {
         return (
             <div className="max-w-7xl mx-auto px-4 py-4">
                 <h1 className="text-3xl">You aren&apos;t in a group yet! Do you want to join or create one?</h1>

@@ -5,6 +5,7 @@ import {createPortal} from "react-dom";
 import { useRouter } from "next/navigation";
 import { IoMdClose } from "react-icons/io";
 import axios from 'axios';
+import { useUserGroup } from "@/auth/GroupContext";
 import { useAuth } from "@clerk/nextjs";
 import { API_URL } from "@/libs/api";
 
@@ -315,11 +316,13 @@ const CreateGroupModal = ({ onClose, onSuccess }: { onClose: () => void; onSucce
 
 export const NoGroupSection = () => {
     const router = useRouter();
+    const { refresh: refreshGroup } = useUserGroup();
     const [joinOpen, setJoinOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
 
-    const handleSuccess = () => {
-        router.refresh();
+    const handleSuccess = async () => {
+        await refreshGroup();
+        router.push('/races');
     };
 
     return (

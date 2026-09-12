@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SeasonLeaderboardEntry } from "@/libs/types";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 import { API_URL } from "@/libs/api";
+import { getUserGroup } from "@/libs/group";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -23,17 +24,8 @@ export default async function LeaderBoardPage() {
     redirect("/sign-in?redirect_url=/leader-board");
   }
 
-  const groupRes = await fetch(`${API_URL}/protected/group`, {
-    cache: "no-store",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!groupRes.ok) {
-    return <div className="max-w-2xl mx-auto p-4 text-center" style={{ color: 'var(--text-muted)' }}>Failed to load group data.</div>;
-  }
-
-  const groupData = await groupRes.json();
-  if (!groupData.group) {
+  const userGroup = await getUserGroup(token);
+  if (!userGroup) {
     redirect("/groups");
   }
 
@@ -57,7 +49,7 @@ export default async function LeaderBoardPage() {
       <SeasonLeaderboard
         leaderboard={leaderboard}
         raceCount={raceCount}
-        groupName={groupData.group.group_name}
+        groupName={userGroup.groupName}
         currentUserId={currentUserId}
       />
     </div>

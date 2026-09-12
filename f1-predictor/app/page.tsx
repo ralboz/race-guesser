@@ -103,8 +103,8 @@ export default async function Home() {
                                 <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
                                     Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{user.firstName}</span>
                                 </p>
-                                <Link href="/groups" className="btn btn-primary text-lg px-8 py-3">
-                                    Go to My Group
+                                <Link href="/races" className="btn btn-primary text-lg px-8 py-3">
+                                    Go to My Races
                                     <FiArrowRight className="ml-2 inline" />
                                 </Link>
                             </div>

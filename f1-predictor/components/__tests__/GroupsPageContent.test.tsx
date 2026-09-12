@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { GroupsPageContent } from '../GroupsPageContent';
-import { Group, Race, PublicGroupInfo } from '@/libs/types';
+import { Race, PublicGroupInfo } from '@/libs/types';
 
-vi.mock('@/components/CopyButton', () => ({
-    CopyButton: ({ text }: { text: string }) => <span data-testid="copy-button">{text}</span>,
-}));
 vi.mock('@/components/NoGroupSection', () => ({
     NoGroupSection: () => <div data-testid="no-group-section" />,
 }));
@@ -16,9 +13,6 @@ vi.mock('@/components/PublicGroupList', () => ({
 }));
 vi.mock('@/components/RaceList', () => ({
     RaceList: () => <div data-testid="race-list" />,
-}));
-vi.mock('@/components/NotificationToggle', () => ({
-    NotificationToggle: () => <div data-testid="notification-toggle" />,
 }));
 
 const mockRace: Race = {
@@ -37,16 +31,6 @@ const mockRace: Race = {
     year: 2026,
 };
 
-const mockGroup: Group = {
-    id: 1234,
-    groupName: 'Test Group',
-    groupType: 'private',
-    ownerId: 'user-1',
-    groupId: '1234',
-    isOwner: false,
-    memberCount: 5,
-};
-
 const mockPublicGroups: PublicGroupInfo[] = [
     { id: 100, groupName: 'Open League', memberCount: 12 },
 ];
@@ -59,7 +43,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={false}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}
@@ -72,7 +55,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={false}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}
@@ -88,7 +70,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={false}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}
@@ -102,7 +83,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={false}
-                    userGroup={null}
                     publicGroups={[]}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}
@@ -115,7 +95,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={false}
-                    userGroup={null}
                     publicGroups={[]}
                     upcomingRaces={[]}
                     pastRaces={[]}
@@ -125,13 +104,13 @@ describe('GroupsPageContent', () => {
         });
     });
 
-    // Signed in not in group
+    // Signed in not in group — the only signed-in state GroupsPageContent handles now,
+    // since members are redirected to /races before this component renders.
     describe('when signed in without a group', () => {
         it('shows the no-group heading', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={true}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}
@@ -144,7 +123,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={true}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[]}
                     pastRaces={[]}
@@ -157,7 +135,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={true}
-                    userGroup={null}
                     publicGroups={mockPublicGroups}
                     upcomingRaces={[]}
                     pastRaces={[]}
@@ -171,7 +148,6 @@ describe('GroupsPageContent', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={true}
-                    userGroup={null}
                     publicGroups={[]}
                     upcomingRaces={[]}
                     pastRaces={[]}
@@ -179,120 +155,11 @@ describe('GroupsPageContent', () => {
             );
             expect(screen.queryByRole('link', { name: 'Join a Group' })).not.toBeInTheDocument();
         });
-    });
 
-    // Signed in and in a group
-    describe('when signed in with a group', () => {
-        it('shows the group name as heading', () => {
+        it('renders the race list in the locked (hasGroup=false) state', () => {
             render(
                 <GroupsPageContent
                     isSignedIn={true}
-                    userGroup={mockGroup}
-                    publicGroups={[]}
-                    upcomingRaces={[mockRace]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.getByText('Test Group')).toBeInTheDocument();
-        });
-
-        it('shows the group ID', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={mockGroup}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.getByText('#1234')).toBeInTheDocument();
-        });
-
-        it('shows member count', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={mockGroup}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.getByText('5 members')).toBeInTheDocument();
-        });
-
-        it('shows singular "member" when count is 1', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={{ ...mockGroup, memberCount: 1 }}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.getByText('1 member')).toBeInTheDocument();
-        });
-
-        it('shows Manage Group link when user is owner', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={{ ...mockGroup, isOwner: true }}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.getByRole('link', { name: 'Manage Group' })).toHaveAttribute('href', '/groups/manage');
-        });
-
-        it('does not show Manage Group link when user is not owner', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={{ ...mockGroup, isOwner: false }}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.queryByRole('link', { name: 'Manage Group' })).not.toBeInTheDocument();
-        });
-
-        it('does not show NoGroupSection or sign-up CTAs', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={mockGroup}
-                    publicGroups={[]}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.queryByTestId('no-group-section')).not.toBeInTheDocument();
-            expect(screen.queryByRole('link', { name: 'Join a Group' })).not.toBeInTheDocument();
-        });
-
-        it('does not show PublicGroupList', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={mockGroup}
-                    publicGroups={mockPublicGroups}
-                    upcomingRaces={[]}
-                    pastRaces={[]}
-                />
-            );
-            expect(screen.queryByTestId('public-group-list')).not.toBeInTheDocument();
-        });
-
-        it('renders the race list', () => {
-            render(
-                <GroupsPageContent
-                    isSignedIn={true}
-                    userGroup={mockGroup}
                     publicGroups={[]}
                     upcomingRaces={[mockRace]}
                     pastRaces={[]}

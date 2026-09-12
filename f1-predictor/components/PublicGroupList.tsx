@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { API_URL } from '@/libs/api';
 import { PublicGroupInfo } from '@/libs/types';
+import { useUserGroup } from '@/auth/GroupContext';
 
 export function PublicGroupList({ groups, isSignedIn }: { groups: PublicGroupInfo[]; isSignedIn: boolean }) {
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -62,6 +63,7 @@ export function PublicGroupList({ groups, isSignedIn }: { groups: PublicGroupInf
 function PublicGroupCard({ group, isSignedIn }: { group: PublicGroupInfo; isSignedIn: boolean }) {
     const router = useRouter();
     const { getToken } = useAuth();
+    const { refresh: refreshGroup } = useUserGroup();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -76,7 +78,8 @@ function PublicGroupCard({ group, isSignedIn }: { group: PublicGroupInfo; isSign
             }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            router.refresh();
+            await refreshGroup();
+            router.push('/races');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to join group');
         } finally {

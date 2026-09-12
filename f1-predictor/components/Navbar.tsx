@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/auth/AuthContext';
+import { useUserGroup } from '@/auth/GroupContext';
 
 function MenuIcon() {
     return (
@@ -24,9 +25,12 @@ function CloseIcon() {
     );
 }
 
+type NavLink = { href: string; name: string; placeholder?: boolean };
+
 export default function Navbar() {
     const pathname = usePathname();
     const { isLoggedIn, logout } = useAuth();
+    const { hasGroup } = useUserGroup();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const [menuHeight, setMenuHeight] = useState(0);
@@ -39,26 +43,33 @@ export default function Navbar() {
         }
     }, [mobileMenuOpen]);
 
-    const links = isLoggedIn
-        ? [
-              { href: '/', name: 'Home' },
-              { href: '/groups', name: 'Groups' },
-              { href: '/leader-board', name: 'Leaderboard' },
-              { href: '/global-leaderboard', name: 'Global Rankings' },
-              { href: '/blog', name: 'Blog' },
-          ]
-        : [
-              { href: '/', name: 'Home' },
-              { href: '/groups', name: 'Groups' },
-              { href: '/global-leaderboard', name: 'Global Rankings' },
-              { href: '/blog', name: 'Blog' },
-          ];
+    // Members (hasGroup === true) get "Races" + "Leaderboard"; everyone else
+    // (signed out, or signed in without a group) gets "Groups". While membership
+    // is still resolving for a signed-in user (hasGroup === null), render a
+    // placeholder in that slot instead of guessing, to avoid a flash of the wrong label.
+    const racesOrGroupsLink: NavLink =
+        hasGroup === true
+            ? { href: '/races', name: 'Races' }
+            : hasGroup === false
+                ? { href: '/groups', name: 'Groups' }
+                : { href: '#', name: '', placeholder: true };
+
+    const links: NavLink[] = [
+        { href: '/', name: 'Home' },
+        racesOrGroupsLink,
+        ...(hasGroup === true ? [{ href: '/leader-board', name: 'Leaderboard' }] : []),
+        { href: '/global-leaderboard', name: 'Global Rankings' },
+        { href: '/blog', name: 'Blog' },
+    ];
 
     const handleLogout = () => {
         logout();
     };
 
-    const isActive = (href: string) => pathname === href;
+    const isActive = (href: string) => {
+        if (href === '/') return pathname === '/';
+        return pathname === href || pathname.startsWith(href + '/');
+    };
 
     return (
         <nav
@@ -79,28 +90,37 @@ export default function Navbar() {
                     </Link>
                     {/* Desktop*/}
                     <div className="hidden md:flex items-center">
-                        {links.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`focus-ring relative mx-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
-                                    !isActive(link.href) ? 'hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]' : ''
-                                }`}
-                                style={{
-                                    color: isActive(link.href)
-                                        ? 'var(--text-primary)'
-                                        : 'var(--text-secondary)',
-                                }}
-                            >
-                                {link.name}
-                                {isActive(link.href) && (
-                                    <span
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                                        style={{ backgroundColor: 'var(--color-accent)' }}
-                                    />
-                                )}
-                            </Link>
-                        ))}
+                        {links.map((link) =>
+                            link.placeholder ? (
+                                <span
+                                    key="races-groups-placeholder"
+                                    aria-hidden="true"
+                                    className="mx-2 px-3 py-2"
+                                    style={{ width: '64px', display: 'inline-block' }}
+                                />
+                            ) : (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`focus-ring relative mx-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                                        !isActive(link.href) ? 'hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]' : ''
+                                    }`}
+                                    style={{
+                                        color: isActive(link.href)
+                                            ? 'var(--text-primary)'
+                                            : 'var(--text-secondary)',
+                                    }}
+                                >
+                                    {link.name}
+                                    {isActive(link.href) && (
+                                        <span
+                                            className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                                            style={{ backgroundColor: 'var(--color-accent)' }}
+                                        />
+                                    )}
+                                </Link>
+                            )
+                        )}
                     </div>
                 </div>
 
@@ -162,27 +182,29 @@ export default function Navbar() {
                 }}
             >
                 <div ref={menuRef} className="flex flex-col px-4 pb-4">
-                    {links.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`focus-ring flex items-center rounded px-3 font-medium transition-colors ${
-                                !isActive(link.href) ? 'hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]' : ''
-                            }`}
-                            style={{
-                                minHeight: '44px',
-                                color: isActive(link.href)
-                                    ? 'var(--text-primary)'
-                                    : 'var(--text-secondary)',
-                                borderLeft: isActive(link.href)
-                                    ? '3px solid var(--color-accent)'
-                                    : '3px solid transparent',
-                            }}
-                        >
-                            {link.name}
-                        </Link>
-                    ))}
+                    {links.map((link) =>
+                        link.placeholder ? null : (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`focus-ring flex items-center rounded px-3 font-medium transition-colors ${
+                                    !isActive(link.href) ? 'hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]' : ''
+                                }`}
+                                style={{
+                                    minHeight: '44px',
+                                    color: isActive(link.href)
+                                        ? 'var(--text-primary)'
+                                        : 'var(--text-secondary)',
+                                    borderLeft: isActive(link.href)
+                                        ? '3px solid var(--color-accent)'
+                                        : '3px solid transparent',
+                                }}
+                            >
+                                {link.name}
+                            </Link>
+                        )
+                    )}
 
                     <div
                         className="my-2 h-px"

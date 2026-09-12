@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { API_URL } from "@/libs/api";
+import { getUserGroup } from "@/libs/group";
 import { GroupAdminPanel } from "@/components/GroupAdminPanel";
 import type { Metadata } from "next";
 
@@ -23,26 +23,15 @@ async function getOwnedGroup() {
         redirect(`/sign-in?redirect_url=/groups/manage`);
     }
 
-    try {
-        const res = await fetch(`${API_URL}/protected/group`, {
-            cache: 'no-store',
-            headers: { Authorization: `Bearer ${token}` },
-        });
+    const group = await getUserGroup(token);
+    if (!group || !group.isOwner) return null;
 
-        if (!res.ok) return null;
-
-        const data = await res.json();
-        if (!data.group || !data.isOwner) return null;
-
-        return {
-            id: data.group.id,
-            groupName: data.group.group_name,
-            groupType: data.group.group_type as 'public' | 'private',
-            groupId: data.group.id.toString(),
-        };
-    } catch {
-        return null;
-    }
+    return {
+        id: group.id,
+        groupName: group.groupName,
+        groupType: group.groupType,
+        groupId: group.groupId,
+    };
 }
 
 export default async function ManageGroupPage() {
@@ -55,11 +44,11 @@ export default async function ManageGroupPage() {
     return (
         <div className="max-w-3xl mx-auto px-4 py-4">
             <Link
-                href="/groups"
+                href="/races"
                 className="text-sm mb-4 inline-block transition-colors"
                 style={{ color: 'var(--text-secondary)' }}
             >
-                ← Back to group
+                ← Back to races
             </Link>
             <h1 className="text-3xl mb-2">Manage {group.groupName}</h1>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>

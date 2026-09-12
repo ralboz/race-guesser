@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { AuthProvider } from "@/auth/AuthContext";
+import { GroupProvider } from "@/auth/GroupContext";
 
 const openSans = Open_Sans({
   variable: "--font-open-sans",
@@ -73,6 +74,7 @@ export default function RootLayout({
         className={`${openSans.variable} antialiased`}
       >
         <ClerkProvider
+          signInFallbackRedirectUrl="/races"
           appearance={{
             baseTheme: dark,
             variables: {
@@ -103,8 +105,10 @@ export default function RootLayout({
           }}
         >
           <AuthProvider>
-            <Navbar />
-            {children}
+            <GroupProvider>
+              <Navbar />
+              {children}
+            </GroupProvider>
           </AuthProvider>
         </ClerkProvider>
       </body>
