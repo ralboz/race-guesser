@@ -28,10 +28,8 @@ export default function TiltCard({ children, className = '', style, accentLine =
                 const tiltX = (y - 0.5) * -4.2;
                 const tiltY = (x - 0.5) * 4.2;
 
-                el.style.transition = 'none';
+                el.style.transition = 'transform 0.15s ease-out';
                 el.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
-
-
             });
         };
 

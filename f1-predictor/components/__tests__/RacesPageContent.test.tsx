@@ -6,11 +6,21 @@ import { Group, Race } from '@/libs/types';
 vi.mock('@/components/CopyButton', () => ({
     CopyButton: ({ text }: { text: string }) => <span data-testid="copy-button">{text}</span>,
 }));
-vi.mock('@/components/RaceList', () => ({
-    RaceList: () => <div data-testid="race-list" />,
+vi.mock('@/components/RaceTabs', () => ({
+    RaceTabs: () => <div data-testid="race-tabs" />,
 }));
 vi.mock('@/components/NotificationToggle', () => ({
     NotificationToggle: () => <div data-testid="notification-toggle" />,
+}));
+vi.mock('@/components/FeaturedRaces', () => ({
+    FeaturedRaces: ({ nextRace, lastRace, nextRaceSubmitted }: { nextRace: Race | null; lastRace: Race | null; nextRaceSubmitted: boolean | null }) => (
+        <div
+            data-testid="featured-races"
+            data-has-next={String(!!nextRace)}
+            data-has-last={String(!!lastRace)}
+            data-submitted={String(nextRaceSubmitted)}
+        />
+    ),
 }));
 
 const mockRace: Race = {
@@ -72,8 +82,32 @@ describe('RacesPageContent', () => {
         expect(screen.queryByRole('link', { name: 'Manage Group' })).not.toBeInTheDocument();
     });
 
-    it('renders the RaceList', () => {
+    it('renders the RaceTabs', () => {
         render(<RacesPageContent userGroup={memberGroup} upcomingRaces={[mockRace]} pastRaces={[]} />);
-        expect(screen.getByTestId('race-list')).toBeInTheDocument();
+        expect(screen.getByTestId('race-tabs')).toBeInTheDocument();
+    });
+
+    it('passes the next race and submitted status through to FeaturedRaces', () => {
+        render(<RacesPageContent userGroup={memberGroup} upcomingRaces={[mockRace]} pastRaces={[]} nextRaceSubmitted={true} />);
+        const featured = screen.getByTestId('featured-races');
+        expect(featured).toHaveAttribute('data-has-next', 'true');
+        expect(featured).toHaveAttribute('data-submitted', 'true');
+    });
+
+    it('passes null nextRace to FeaturedRaces when there are no upcoming races', () => {
+        render(<RacesPageContent userGroup={memberGroup} upcomingRaces={[]} pastRaces={[]} />);
+        expect(screen.getByTestId('featured-races')).toHaveAttribute('data-has-next', 'false');
+    });
+
+    it('passes the most recent past race to FeaturedRaces as lastRace', () => {
+        const earlier: Race = { ...mockRace, race_id: 'earlier', date_end: '2026-01-10' };
+        const later: Race = { ...mockRace, race_id: 'later', date_end: '2026-02-10' };
+        render(<RacesPageContent userGroup={memberGroup} upcomingRaces={[]} pastRaces={[earlier, later]} />);
+        expect(screen.getByTestId('featured-races')).toHaveAttribute('data-has-last', 'true');
+    });
+
+    it('passes null lastRace to FeaturedRaces when there are no past races', () => {
+        render(<RacesPageContent userGroup={memberGroup} upcomingRaces={[mockRace]} pastRaces={[]} />);
+        expect(screen.getByTestId('featured-races')).toHaveAttribute('data-has-last', 'false');
     });
 });

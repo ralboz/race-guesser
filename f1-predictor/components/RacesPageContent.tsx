@@ -1,16 +1,35 @@
-import { Group, Race } from "@/libs/types";
+import { Group, LeaderboardEntry, Race } from "@/libs/types";
 import { CopyButton } from "@/components/CopyButton";
 import { NotificationToggle } from "@/components/NotificationToggle";
-import { RaceList } from "@/components/RaceList";
+import { RaceTabs } from "@/components/RaceTabs";
+import { FeaturedRaces } from "@/components/FeaturedRaces";
 import Link from "next/link";
 
 interface RacesPageContentProps {
     userGroup: Group;
     upcomingRaces: Race[];
     pastRaces: Race[];
+    nextRaceSubmitted?: boolean | null;
+    lastRacePodium?: LeaderboardEntry[];
+    currentUserId?: string;
+    lastRaceYourScore?: number | null;
 }
 
-export function RacesPageContent({ userGroup, upcomingRaces, pastRaces }: RacesPageContentProps) {
+export function RacesPageContent({
+    userGroup,
+    upcomingRaces,
+    pastRaces,
+    nextRaceSubmitted = null,
+    lastRacePodium = [],
+    currentUserId = "",
+    lastRaceYourScore = null,
+}: RacesPageContentProps) {
+    const nextRace = upcomingRaces[0] ?? null;
+    const lastRace = pastRaces.length > 0
+        ? pastRaces.reduce((latest, race) =>
+            new Date(race.date_end).getTime() > new Date(latest.date_end).getTime() ? race : latest
+        )
+        : null;
     return (
         <div className="max-w-7xl mx-auto px-4 py-4">
             <h1 className="text-3xl">{userGroup.groupName}</h1>
@@ -30,7 +49,15 @@ export function RacesPageContent({ userGroup, upcomingRaces, pastRaces }: RacesP
                 </div>
             )}
             {!userGroup.isOwner && <NotificationToggle />}
-            <RaceList upcomingRaces={upcomingRaces} pastRaces={pastRaces} isOwner={!!userGroup.isOwner} />
+            <FeaturedRaces
+                nextRace={nextRace}
+                nextRaceSubmitted={nextRaceSubmitted}
+                lastRace={lastRace}
+                lastRacePodium={lastRacePodium}
+                currentUserId={currentUserId}
+                lastRaceYourScore={lastRaceYourScore}
+            />
+            <RaceTabs upcomingRaces={upcomingRaces} pastRaces={pastRaces} isOwner={!!userGroup.isOwner} />
         </div>
     );
 }
