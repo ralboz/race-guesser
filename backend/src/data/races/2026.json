@@ -225,6 +225,21 @@
     "year": 2026
   },
   {
+    "race_id": "bahrain-2026",
+    "meeting_key": 1308,
+    "meeting_name": "Bahrain Grand Prix",
+    "meeting_official_name": "FORMULA 1 GULF AIR BAHRAIN GRAND PRIX IN MALAYSIA 2026",
+    "location": "Kuala Lumpur",
+    "country_name": "Bahrain",
+    "country_code": "bh",
+    "circuit_short_name": "Kuala Lumpur",
+    "circuit_id": "my-1999",
+    "date_start": "2026-10-02",
+    "date_end": "2026-10-04",
+    "fp1_start": "2026-10-02T04:30:00+00:00",
+    "year": 2026
+  },
+  {
     "race_id": "singapore-2026",
     "meeting_key": 1296,
     "meeting_name": "Singapore Grand Prix",
