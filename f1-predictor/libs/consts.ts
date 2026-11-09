@@ -1,3 +1,10 @@
+/**
+ * Three-letter codes for every driver who has appeared in 2026, including
+ * replaced ones (past predictions still show them). Only used by
+ * `driverCode()`; the selectable lineup per race comes from the backend
+ * (see libs/drivers.ts). A driver missing here falls back to the first three
+ * letters of their surname, so adding new entries is optional.
+ */
 export const DRIVERS_2026 = [
     { number: 1, full_name: 'Lando Norris', code: 'NOR' },
     { number: 3, full_name: 'Max Verstappen', code: 'VER' },
@@ -16,6 +23,8 @@ export const DRIVERS_2026 = [
     { number: 41, full_name: 'Arvid Lindblad', code: 'LIN' },
     { number: 43, full_name: 'Franco Colapinto', code: 'COL' },
     { number: 44, full_name: 'Lewis Hamilton', code: 'HAM' },
+    { number: 50, full_name: 'Ryo Hirakawa', code: 'HIR' },
+    { number: 51, full_name: 'Rafael Camara', code: 'CAM' },
     { number: 55, full_name: 'Carlos Sainz Jr.', code: 'SAI' },
     { number: 63, full_name: 'George Russell', code: 'RUS' },
     { number: 77, full_name: 'Valtteri Bottas', code: 'BOT' },

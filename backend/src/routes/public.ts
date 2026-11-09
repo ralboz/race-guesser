@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { fn, col, Op, literal } from 'sequelize';
 import sequelize from '../config/database';
 import { getRacesByYear, getRaceById } from '../data/races';
+import { getEffectiveLineup } from '../services/lineupService';
 import Group from '../models/Group';
 import GroupMember from '../models/GroupMember';
 import UserProfile from '../models/UserProfile';
@@ -63,6 +64,20 @@ router.get('/races/:raceId', (req: Request, res: Response) => {
     return res.status(404).json({ message: 'Race not found' });
   }
   return res.json(race);
+});
+
+// driver lineup for a single race (handles mid-season driver changes)
+router.get('/races/:raceId/drivers', async (req: Request, res: Response) => {
+  try {
+    const lineup = await getEffectiveLineup(req.params.raceId as string);
+    if (!lineup) {
+      return res.status(404).json({ message: 'Race not found' });
+    }
+    return res.json(lineup);
+  } catch (error) {
+    console.error('Error fetching race drivers:', error);
+    return res.status(500).json({ message: 'Failed to fetch drivers' });
+  }
 });
 
 // list public groups with name and member count (cached 5 min)

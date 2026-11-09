@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const src = path.join(__dirname, '..', 'src', 'data', 'races');
-const dest = path.join(__dirname, '..', 'dist', 'data', 'races');
+// JSON data directories under src/data that tsc does not emit
+for (const dir of ['races', 'drivers']) {
+  const src = path.join(__dirname, '..', 'src', 'data', dir);
+  const dest = path.join(__dirname, '..', 'dist', 'data', dir);
 
-fs.mkdirSync(dest, { recursive: true });
+  fs.mkdirSync(dest, { recursive: true });
 
-fs.readdirSync(src)
-  .filter(f => f.endsWith('.json'))
-  .forEach(f => fs.copyFileSync(path.join(src, f), path.join(dest, f)));
+  fs.readdirSync(src)
+    .filter(f => f.endsWith('.json'))
+    .forEach(f => fs.copyFileSync(path.join(src, f), path.join(dest, f)));
 
-console.log('Race data copied to dist/data/races/');
+  console.log(`${dir} data copied to dist/data/${dir}/`);
+}

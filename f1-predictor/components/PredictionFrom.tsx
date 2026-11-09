@@ -1,10 +1,9 @@
 'use client';
 import { useState, ChangeEvent } from 'react';
-import {DRIVERS_2026} from "@/libs/consts";
 import { useAuth } from "@clerk/nextjs"
 import Link from "next/link";
 import { API_URL } from "@/libs/api";
-import { PositionScore, PositionType } from "@/libs/types";
+import { Driver, PositionScore, PositionType } from "@/libs/types";
 
 
 export type PredictionFormData = Record<PositionType, string>;
@@ -13,6 +12,7 @@ const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'Po
 
 type Props = {
     raceId: string;
+    drivers: Driver[];
     loadedFormData?: PredictionFormData | null;
     scoreData?: PositionScore[] | null;
     windowDisabled?: boolean;
@@ -28,7 +28,7 @@ function getScoreClass(basePoints: number): string {
     }
 }
 
-export default function PredictionsForm({ raceId, loadedFormData, scoreData, windowDisabled }: Props) {
+export default function PredictionsForm({ raceId, drivers, loadedFormData, scoreData, windowDisabled }: Props) {
     const { getToken } = useAuth();
     const [formData, setFormData] = useState<PredictionFormData>(loadedFormData ? loadedFormData : {
         pole: '', p1: '', p2: '', p3: '', p4: '',
@@ -93,7 +93,7 @@ export default function PredictionsForm({ raceId, loadedFormData, scoreData, win
     }
 
     const getOptions = (currentField: keyof PredictionFormData) =>
-        DRIVERS_2026.filter(driver => {
+        drivers.filter(driver => {
             if (currentField === 'pole') return true;
             const isSelectedInGridPositions = Object.entries(formData).some(
                 ([key, value]) =>
