@@ -4,6 +4,7 @@ import Image from "next/image";
 import {auth} from "@clerk/nextjs/server";
 import {redirect} from "next/navigation";
 import { API_URL } from "@/libs/api";
+import { getRaceDrivers } from "@/libs/drivers";
 import { CircuitMap } from "@/components/CircuitMap";
 import { getFlagUrl } from "@/libs/flags";
 import type { Metadata } from "next";
@@ -145,8 +146,9 @@ async function fetchSubmissionCount(raceId: string): Promise<SubmissionCount | n
 
 export default async function SpecificRace({ params }: Props) {
     const { raceId } = await params;
-    const [raceDetails, predictionStatus, windowStatus, submissionCount] = await Promise.all([
+    const [raceDetails, drivers, predictionStatus, windowStatus, submissionCount] = await Promise.all([
         getRaceDetails(raceId),
+        getRaceDrivers(raceId),
         userPredictionStatus(raceId),
         fetchPredictionWindow(raceId),
         fetchSubmissionCount(raceId)
@@ -197,6 +199,7 @@ export default async function SpecificRace({ params }: Props) {
 
             <RaceContentTabs
                 raceId={raceId}
+                drivers={drivers}
                 predictionStatus={predictionStatus}
                 hasResults={hasResults}
                 scoresResponse={scoresResponse}

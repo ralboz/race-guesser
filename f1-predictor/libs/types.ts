@@ -14,6 +14,13 @@ export interface Race {
     year: number;
 }
 
+export interface Driver {
+  number: number;
+  full_name: string;
+  code: string;
+  team: string;
+}
+
 export interface Group {
     id: number;
     groupName: string;

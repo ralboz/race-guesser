@@ -9,7 +9,7 @@ import UserRaceScore from '../models/UserRaceScore';
 import {UserPredictionCreationAttributes} from "../models/UserPrediction";
 import { hashPassword, verifyPassword } from '../utils/password';
 import { getPredictionWindow } from '../services/predictionWindowService';
-import { validDriverNames } from '../data';
+import { getEffectiveLineup } from '../services/lineupService';
 
 // 20 requests every 15 mins
 const mutationLimiter = rateLimit({
@@ -186,8 +186,13 @@ router.post('/prediction/:raceId', mutationLimiter, async (req: Request, res: Re
       return res.status(400).json({ message: `Missing prediction for ${missing[0]}` });
     }
 
-    // Validate all driver names against the known driver list
-    const invalidEntry = Object.entries(positions).find(([, name]) => !validDriverNames.has(name.trim()));
+    // Validate all driver names against the driver lineup for this race
+    const lineup = await getEffectiveLineup(raceId as string);
+    if (!lineup) {
+      return res.status(404).json({ message: 'Race not found' });
+    }
+    const lineupNames = new Set(lineup.map(d => d.full_name));
+    const invalidEntry = Object.entries(positions).find(([, name]) => !lineupNames.has(name.trim()));
     if (invalidEntry) {
       return res.status(400).json({ message: `Invalid driver name: "${invalidEntry[1].trim()}"` });
     }

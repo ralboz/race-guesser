@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { DRIVERS_2026 } from '@/libs/consts';
-import { Race } from '@/libs/types';
+import { Driver, Race } from '@/libs/types';
+import { getRaceDrivers } from '@/libs/drivers';
+import LineupManager from '@/components/LineupManager';
 import { API_URL } from '@/libs/api';
 
 const ADMIN_IDS = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(s => s.trim());
@@ -22,6 +23,8 @@ const emptyForm = (): FormData =>
 export default function AdminPage() {
     const { userId, getToken } = useAuth();
     const [races, setRaces] = useState<Race[]>([]);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+    const [lineupVersion, setLineupVersion] = useState(0);
     const [selectedRace, setSelectedRace] = useState('');
     const [formData, setFormData] = useState<FormData>(emptyForm());
     const [loading, setLoading] = useState(false);
@@ -35,6 +38,21 @@ export default function AdminPage() {
             .catch(() => {});
     }, []);
 
+    // Result entry only offers the drivers on the grid for the selected race
+    useEffect(() => {
+        setFormData(emptyForm());
+    }, [selectedRace]);
+
+    useEffect(() => {
+        setDrivers([]);
+        if (!selectedRace) return;
+        let cancelled = false;
+        getRaceDrivers(selectedRace)
+            .then(d => { if (!cancelled) setDrivers(d); })
+            .catch(() => { if (!cancelled) setMessage({ type: 'error', text: 'Failed to load drivers for this race' }); });
+        return () => { cancelled = true; };
+    }, [selectedRace, lineupVersion]);
+
     if (!userId || !ADMIN_IDS.includes(userId)) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -43,7 +61,7 @@ export default function AdminPage() {
         );
     }
 
-    const allDrivers = [...DRIVERS_2026].sort((a, b) => a.full_name.localeCompare(b.full_name));
+    const allDrivers = [...drivers].sort((a, b) => a.full_name.localeCompare(b.full_name));
 
     const getAvailableDrivers = (currentPos: string) =>
         allDrivers.filter(d => {
@@ -196,6 +214,8 @@ export default function AdminPage() {
                     </div>
                 </div>
             )}
+
+            <LineupManager races={races} onChanged={() => setLineupVersion(v => v + 1)} />
         </div>
     );
 }

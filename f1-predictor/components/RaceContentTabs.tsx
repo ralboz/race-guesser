@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ScoresResponse, LeaderboardEntry, GroupPredictionsResponse } from '@/libs/types';
+import { ScoresResponse, LeaderboardEntry, GroupPredictionsResponse, Driver } from '@/libs/types';
 import { PredictionFormData } from '@/components/PredictionFrom';
 import PredictionsForm from '@/components/PredictionFrom';
 import ScoreSummary from '@/components/ScoreSummary';
@@ -23,6 +23,7 @@ type TabId = 'predictions' | 'group-predictions' | 'leaderboard';
 
 type RaceContentTabsProps = {
     raceId: string;
+    drivers: Driver[];
     predictionStatus: PredictionCheckResponse;
     hasResults: boolean;
     scoresResponse: ScoresResponse | null;
@@ -35,6 +36,7 @@ type RaceContentTabsProps = {
 
 export default function RaceContentTabs({
     raceId,
+    drivers,
     predictionStatus,
     hasResults,
     scoresResponse,
@@ -101,12 +103,12 @@ export default function RaceContentTabs({
                             <MemberPredictionStatus raceId={raceId} />
                         </div>
                         {!predictionStatus.submitted && (
-                            <PredictionsForm raceId={raceId} windowDisabled={windowDisabled} />
+                            <PredictionsForm raceId={raceId} drivers={drivers} windowDisabled={windowDisabled} />
                         )}
                         {predictionStatus.submitted && !hasResults && (
                             <div className="pt-4">
                                 <h2>You have already submitted for this race!</h2>
-                                <PredictionsForm raceId={raceId} loadedFormData={predictionStatus.predictions} />
+                                <PredictionsForm raceId={raceId} drivers={drivers} loadedFormData={predictionStatus.predictions} />
                             </div>
                         )}
                         {predictionStatus.submitted && hasResults && (
@@ -121,6 +123,7 @@ export default function RaceContentTabs({
                                 )}
                                 <PredictionsForm
                                     raceId={raceId}
+                                    drivers={drivers}
                                     loadedFormData={predictionStatus.predictions}
                                     scoreData={scoresResponse!.scores}
                                 />

@@ -9,6 +9,7 @@ import publicRoutes from './routes/public';
 import protectedRoutes from './routes/protected';
 import adminRoutes from './routes/admin';
 import superadminRoutes from './routes/superadmin';
+import superadminLineupRoutes from './routes/superadminLineup';
 import { initializeDatabase } from './models';
 
 const app = express();
@@ -47,6 +48,7 @@ app.use(clerkMiddleware());
 app.use('/public', publicRoutes);
 app.use('/protected', protectedRoutes);
 app.use('/admin', adminRoutes)
+app.use('/superadmin/lineup', superadminLineupRoutes)
 app.use('/superadmin', superadminRoutes)
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
